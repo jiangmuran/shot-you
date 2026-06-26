@@ -3,15 +3,23 @@ package com.shotyou.app.ui.screens.usage
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shotyou.app.domain.model.AiOperation
+import com.shotyou.app.domain.model.AiSettings
 import com.shotyou.app.domain.model.UsageRecord
+import com.shotyou.app.domain.repository.SettingsRepository
 import com.shotyou.app.domain.repository.UsageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+/** A usage record paired with its computed cost (from the configured prices). */
+data class UsageEntry(
+    val record: UsageRecord,
+    val cost: Double,
+)
 
 /** Aggregated usage figures shown on the dashboard. */
 data class UsageUiState(
@@ -21,10 +29,12 @@ data class UsageUiState(
     val totalPromptTokens: Int = 0,
     val totalCompletionTokens: Int = 0,
     val totalImages: Int = 0,
-    val totalCostUsd: Double = 0.0,
+    val totalCost: Double = 0.0,
+    val currencySymbol: String = "$",
+    val pricesConfigured: Boolean = false,
     val byOperation: List<Pair<AiOperation, Int>> = emptyList(),
     val byProvider: List<Pair<String, Int>> = emptyList(),
-    val recent: List<UsageRecord> = emptyList(),
+    val recent: List<UsageEntry> = emptyList(),
 ) {
     val totalTokens: Int get() = totalPromptTokens + totalCompletionTokens
 }
@@ -32,18 +42,29 @@ data class UsageUiState(
 @HiltViewModel
 class UsageViewModel @Inject constructor(
     private val repository: UsageRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
-    val state: StateFlow<UsageUiState> = repository.observeRecords()
-        .map { records -> aggregate(records) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UsageUiState())
+    val state: StateFlow<UsageUiState> =
+        combine(repository.observeRecords(), settingsRepository.settings) { records, settings ->
+            aggregate(records, settings)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UsageUiState())
 
     fun clear() {
         viewModelScope.launch { repository.clear() }
     }
 
-    private fun aggregate(records: List<UsageRecord>): UsageUiState {
-        if (records.isEmpty()) return UsageUiState()
+    private fun aggregate(records: List<UsageRecord>, settings: AiSettings): UsageUiState {
+        val pricesConfigured = settings.pricePerImage > 0.0 ||
+            settings.pricePer1kInputTokens > 0.0 ||
+            settings.pricePer1kOutputTokens > 0.0
+
+        if (records.isEmpty()) {
+            return UsageUiState(
+                currencySymbol = settings.currencySymbol,
+                pricesConfigured = pricesConfigured,
+            )
+        }
 
         val byOperation = AiOperation.entries
             .map { op -> op to records.count { it.operation == op } }
@@ -62,10 +83,17 @@ class UsageViewModel @Inject constructor(
             totalPromptTokens = records.sumOf { it.promptTokens },
             totalCompletionTokens = records.sumOf { it.completionTokens },
             totalImages = records.sumOf { it.imageCount },
-            totalCostUsd = records.sumOf { it.estimatedCostUsd },
+            totalCost = records.sumOf { costOf(it, settings) },
+            currencySymbol = settings.currencySymbol,
+            pricesConfigured = pricesConfigured,
             byOperation = byOperation,
             byProvider = byProvider,
-            recent = records.take(20),
+            recent = records.take(20).map { UsageEntry(it, costOf(it, settings)) },
         )
     }
+
+    private fun costOf(r: UsageRecord, s: AiSettings): Double =
+        r.imageCount * s.pricePerImage +
+            r.promptTokens / 1000.0 * s.pricePer1kInputTokens +
+            r.completionTokens / 1000.0 * s.pricePer1kOutputTokens
 }

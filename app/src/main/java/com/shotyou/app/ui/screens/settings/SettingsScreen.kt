@@ -155,7 +155,35 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 }
             }
 
-            // 3. Queue
+            // 3. Pricing
+            item { SettingsSectionHeader(stringResource(R.string.settings_section_pricing)) }
+            item {
+                SettingsCard {
+                    SettingsPriceField(
+                        value = settings.pricePerImage,
+                        onValueChange = { v -> viewModel.update { it.copy(pricePerImage = v) } },
+                        label = stringResource(R.string.settings_price_per_image),
+                    )
+                    SettingsPriceField(
+                        value = settings.pricePer1kInputTokens,
+                        onValueChange = { v -> viewModel.update { it.copy(pricePer1kInputTokens = v) } },
+                        label = stringResource(R.string.settings_price_per_1k_input),
+                    )
+                    SettingsPriceField(
+                        value = settings.pricePer1kOutputTokens,
+                        onValueChange = { v -> viewModel.update { it.copy(pricePer1kOutputTokens = v) } },
+                        label = stringResource(R.string.settings_price_per_1k_output),
+                    )
+                    SettingsTextField(
+                        value = settings.currencySymbol,
+                        onValueChange = { v -> viewModel.update { it.copy(currencySymbol = v) } },
+                        label = stringResource(R.string.settings_currency_symbol),
+                        supportingText = stringResource(R.string.settings_pricing_helper),
+                    )
+                }
+            }
+
+            // 4. Queue
             item { SettingsSectionHeader(stringResource(R.string.settings_section_queue)) }
             item {
                 SettingsCard {
@@ -198,7 +226,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 }
             }
 
-            // 4. Background
+            // 5. Background
             item { SettingsSectionHeader(stringResource(R.string.settings_section_background)) }
             item {
                 SettingsCard {
@@ -223,7 +251,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 }
             }
 
-            // 5. Prompt
+            // 6. Prompt
             item { SettingsSectionHeader(stringResource(R.string.settings_section_prompt)) }
             item {
                 SettingsCard {
@@ -236,7 +264,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 }
             }
 
-            // 6. Language
+            // 7. Language
             item { SettingsSectionHeader(stringResource(R.string.settings_section_language)) }
             item {
                 SettingsCard {

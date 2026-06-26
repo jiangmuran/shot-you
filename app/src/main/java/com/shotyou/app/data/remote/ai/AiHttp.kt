@@ -106,6 +106,7 @@ internal object PromptOptimization {
         appendLine("Rewrite the user's request into a single vivid, specific, photorealistic image-generation prompt.")
         appendLine("Preserve the subject's identity and key facial/physical features.")
         appendLine("You MAY freely adjust these aspects if it improves the result: ${editableAspects.joinToString(", ")}.")
+        appendLine("Write the rewritten prompt in the SAME language as the user's request (e.g. reply in Chinese if the request is in Chinese).")
         appendLine("Keep it under 120 words. Return ONLY the rewritten prompt text — no preamble, quotes, or explanation.")
     }
 

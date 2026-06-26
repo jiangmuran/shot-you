@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -41,6 +42,10 @@ class SettingsRepositoryImpl @Inject constructor(
         val AUTO_OPTIMIZE = booleanPreferencesKey("auto_optimize")
         val DEFAULT_STYLE = stringPreferencesKey("default_style")
         val DEFAULT_INTENSITY = intPreferencesKey("default_intensity")
+        val PRICE_PER_IMAGE = doublePreferencesKey("price_per_image")
+        val PRICE_PER_1K_INPUT = doublePreferencesKey("price_per_1k_input")
+        val PRICE_PER_1K_OUTPUT = doublePreferencesKey("price_per_1k_output")
+        val CURRENCY_SYMBOL = stringPreferencesKey("currency_symbol")
         val APP_LANGUAGE = stringPreferencesKey("app_language")
     }
 
@@ -66,6 +71,10 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs[Keys.AUTO_OPTIMIZE] = s.autoOptimizePrompt
             prefs[Keys.DEFAULT_STYLE] = s.defaultStyle
             prefs[Keys.DEFAULT_INTENSITY] = s.defaultIntensity
+            prefs[Keys.PRICE_PER_IMAGE] = s.pricePerImage
+            prefs[Keys.PRICE_PER_1K_INPUT] = s.pricePer1kInputTokens
+            prefs[Keys.PRICE_PER_1K_OUTPUT] = s.pricePer1kOutputTokens
+            prefs[Keys.CURRENCY_SYMBOL] = s.currencySymbol
             prefs[Keys.APP_LANGUAGE] = s.appLanguage
         }
     }
@@ -88,6 +97,10 @@ class SettingsRepositoryImpl @Inject constructor(
             autoOptimizePrompt = this[Keys.AUTO_OPTIMIZE] ?: d.autoOptimizePrompt,
             defaultStyle = this[Keys.DEFAULT_STYLE] ?: d.defaultStyle,
             defaultIntensity = this[Keys.DEFAULT_INTENSITY] ?: d.defaultIntensity,
+            pricePerImage = this[Keys.PRICE_PER_IMAGE] ?: d.pricePerImage,
+            pricePer1kInputTokens = this[Keys.PRICE_PER_1K_INPUT] ?: d.pricePer1kInputTokens,
+            pricePer1kOutputTokens = this[Keys.PRICE_PER_1K_OUTPUT] ?: d.pricePer1kOutputTokens,
+            currencySymbol = this[Keys.CURRENCY_SYMBOL] ?: d.currencySymbol,
             appLanguage = this[Keys.APP_LANGUAGE] ?: d.appLanguage,
         )
     }

@@ -71,7 +71,8 @@ class TemplateRepositoryImpl @Inject constructor(
     override suspend fun ensureSeeded() {
         if (templateDao.count() > 0) return
         val now = clock.now()
-        BuiltInTemplates.all.forEach { (name, prompt, tags) ->
+        val set = if (isChineseLocale()) BuiltInTemplates.zh else BuiltInTemplates.en
+        set.forEach { (name, prompt, tags) ->
             templateDao.upsert(
                 Template(
                     name = name,
@@ -84,10 +85,18 @@ class TemplateRepositoryImpl @Inject constructor(
             )
         }
     }
+
+    /** True when the active app/device language is Chinese. Prefers the per-app locale. */
+    private fun isChineseLocale(): Boolean {
+        val appLocales = androidx.appcompat.app.AppCompatDelegate.getApplicationLocales()
+        val tag = if (!appLocales.isEmpty) appLocales[0]?.language else null
+        val language = tag ?: java.util.Locale.getDefault().language
+        return language == "zh"
+    }
 }
 
 private object BuiltInTemplates {
-    val all: List<Triple<String, String, List<String>>> = listOf(
+    val en: List<Triple<String, String, List<String>>> = listOf(
         Triple(
             "Best Portrait",
             "From the reference photos of the same person, produce one flawless portrait: " +
@@ -116,6 +125,34 @@ private object BuiltInTemplates {
                 "simple uncluttered background, soft even lighting, neutral tones, calm " +
                 "natural expression. Photorealistic.",
             listOf("minimal", "aesthetic"),
+        ),
+    )
+
+    val zh: List<Triple<String, String, List<String>>> = listOf(
+        Triple(
+            "最佳人像",
+            "根据同一个人的参考照片，生成一张无瑕的人像：" +
+                "保留其真实身份与面部特征，选择最自然、最讨喜的表情，" +
+                "双眼明亮有神，发丝整齐，对焦清晰，柔和的自然光，背景干净。写实风格。",
+            listOf("人像", "人物"),
+        ),
+        Triple(
+            "合影优选",
+            "将参考合影融合在一起，让每个人都展现最佳表情（睁眼、自然微笑）。" +
+                "保留每个人的身份、服装与站位。光线均匀，构图平衡，写实风格。",
+            listOf("合影", "人物"),
+        ),
+        Triple(
+            "旅行大片",
+            "把这些相似的旅行照片合成一张出彩的画面：人物呈现最佳姿态，" +
+                "取景最具风景之美，黄金时刻的光线，色彩鲜艳又自然，细节清晰锐利。写实风格。",
+            listOf("旅行", "风景"),
+        ),
+        Triple(
+            "干净简约",
+            "依据参考照片重塑主体，呈现干净简约的美感：" +
+                "背景简洁不杂乱，光线柔和均匀，色调中性，表情平和自然。写实风格。",
+            listOf("简约", "美学"),
         ),
     )
 }

@@ -67,6 +67,13 @@ data class AiSettings(
     val defaultStyle: String = StylePreset.REALISTIC.id,
     val defaultIntensity: Int = 50,
 
+    // Pricing — used to compute the usage/cost dashboard. All default to 0.0 (cost shown
+    // as 0 until the user fills these in).
+    val pricePerImage: Double = 0.0,
+    val pricePer1kInputTokens: Double = 0.0,
+    val pricePer1kOutputTokens: Double = 0.0,
+    val currencySymbol: String = "$",
+
     // UI
     val appLanguage: String = "system", // "system" | "en" | "zh"
 ) {

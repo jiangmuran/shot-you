@@ -172,6 +172,7 @@
     <string name="usage_op_grouping">Grouping</string>
     <string name="usage_op_prompt">Prompt optimize</string>
     <string name="usage_op_image">Image generation</string>
+    <string name="usage_pricing_hint">Set your prices in Settings → Pricing to see estimated costs here.</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
@@ -197,6 +198,13 @@
     <string name="settings_section_generation">Generation defaults</string>
     <string name="settings_default_style">Default style</string>
     <string name="settings_default_intensity">Default intensity</string>
+
+    <string name="settings_section_pricing">Pricing</string>
+    <string name="settings_price_per_image">Price per image</string>
+    <string name="settings_price_per_1k_input">Price per 1K input tokens</string>
+    <string name="settings_price_per_1k_output">Price per 1K output tokens</string>
+    <string name="settings_currency_symbol">Currency symbol</string>
+    <string name="settings_pricing_helper">Used to estimate cost on the Usage dashboard.</string>
 
     <string name="settings_section_queue">Queue</string>
     <string name="settings_max_concurrent">Max concurrent jobs</string>

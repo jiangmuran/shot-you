@@ -13,6 +13,9 @@ import com.shotyou.app.domain.ai.PromptResult
 import com.shotyou.app.domain.ai.TokenUsage
 import com.shotyou.app.domain.ai.VlmProvider
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 private const val PROVIDER = "OpenAI"
 
@@ -109,21 +112,38 @@ internal class OpenAiImageGenProvider(
         prompt: String,
         options: ImageGenOptions,
     ): ImageGenResult = aiCall(PROVIDER) {
-        // The images/generations endpoint takes no reference uploads; note their presence in text.
-        val effectivePrompt = if (references.isEmpty()) {
-            prompt
+        val n = options.count.coerceAtLeast(1)
+        val response = if (references.isEmpty()) {
+            // No source photos → plain text-to-image.
+            service.imageGenerations(
+                auth = authHeader(apiKey),
+                request = OpenAiImageRequest(model = model, prompt = prompt, n = n, size = options.size),
+            )
         } else {
-            "$prompt\n\n(Base the result on ${references.size} reference photo(s) of the same subject; preserve their identity.)"
+            // Feed the actual reference photos to the model via the edits endpoint so the
+            // result is grounded in the input (not hallucinated from text).
+            val faithful = prompt +
+                "\n\nIMPORTANT: edit/enhance the SAME subject shown in the reference image(s). " +
+                "Preserve their identity, species, key features and overall composition. " +
+                "Do not invent a different subject."
+            val parts = buildList {
+                add(MultipartBody.Part.createFormData("model", model))
+                add(MultipartBody.Part.createFormData("prompt", faithful))
+                add(MultipartBody.Part.createFormData("n", n.toString()))
+                options.size?.let { add(MultipartBody.Part.createFormData("size", it)) }
+                references.forEachIndexed { index, ref ->
+                    val body = ref.bytes.toRequestBody(ref.mimeType.toMediaTypeOrNull(), 0, ref.bytes.size)
+                    val ext = when (ref.mimeType.lowercase()) {
+                        "image/png" -> "png"
+                        "image/webp" -> "webp"
+                        else -> "jpg"
+                    }
+                    // gpt-image-1 accepts multiple images under the "image[]" field.
+                    add(MultipartBody.Part.createFormData("image[]", "ref_$index.$ext", body))
+                }
+            }
+            service.imageEdits(auth = authHeader(apiKey), parts = parts)
         }
-        val response = service.imageGenerations(
-            auth = authHeader(apiKey),
-            request = OpenAiImageRequest(
-                model = model,
-                prompt = effectivePrompt,
-                n = options.count.coerceAtLeast(1),
-                size = options.size,
-            ),
-        )
         response.error?.let { throw AiException("$PROVIDER API error: ${it.message}") }
         val images = response.data.mapNotNull { d -> d.b64Json?.let { GeneratedImage(bytes = it.decodeBase64(), mimeType = "image/png") } }
         if (images.isEmpty()) throw AiException("$PROVIDER returned no image data")

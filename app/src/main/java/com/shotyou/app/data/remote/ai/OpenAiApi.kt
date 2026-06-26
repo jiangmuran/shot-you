@@ -2,9 +2,12 @@ package com.shotyou.app.data.remote.ai
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 
 /**
  * OpenAI REST API. Key is sent via the `Authorization: Bearer <key>` header.
@@ -20,6 +23,17 @@ internal interface OpenAiService {
     suspend fun imageGenerations(
         @Header("Authorization") auth: String,
         @Body request: OpenAiImageRequest,
+    ): OpenAiImageResponse
+
+    /**
+     * Image editing with reference images (multipart). This actually feeds the source
+     * photos to the model (gpt-image-1) so the output reflects the input.
+     */
+    @Multipart
+    @POST("images/edits")
+    suspend fun imageEdits(
+        @Header("Authorization") auth: String,
+        @Part parts: List<MultipartBody.Part>,
     ): OpenAiImageResponse
 }
 

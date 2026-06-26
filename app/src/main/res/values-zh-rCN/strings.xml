@@ -171,6 +171,7 @@
     <string name="usage_op_grouping">分组</string>
     <string name="usage_op_prompt">提示词优化</string>
     <string name="usage_op_image">图像生成</string>
+    <string name="usage_pricing_hint">在“设置 → 价格”中配置价格，即可在此查看预计花费。</string>
 
     <!-- Settings -->
     <string name="settings_title">设置</string>
@@ -196,6 +197,13 @@
     <string name="settings_section_generation">生成默认值</string>
     <string name="settings_default_style">默认风格</string>
     <string name="settings_default_intensity">默认强度</string>
+
+    <string name="settings_section_pricing">价格</string>
+    <string name="settings_price_per_image">每张图片价格</string>
+    <string name="settings_price_per_1k_input">每 1K 输入 Token 价格</string>
+    <string name="settings_price_per_1k_output">每 1K 输出 Token 价格</string>
+    <string name="settings_currency_symbol">货币符号</string>
+    <string name="settings_pricing_helper">用于在用量面板估算花费。</string>
 
     <string name="settings_section_queue">队列</string>
     <string name="settings_max_concurrent">最大并发任务数</string>

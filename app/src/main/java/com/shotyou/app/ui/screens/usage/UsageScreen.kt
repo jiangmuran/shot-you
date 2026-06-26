@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,9 +36,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shotyou.app.R
 import com.shotyou.app.domain.model.AiOperation
-import com.shotyou.app.domain.model.UsageRecord
 import com.shotyou.app.ui.labelRes
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -50,7 +49,7 @@ import java.util.Locale
 fun UsageScreen(
     viewModel: UsageViewModel = hiltViewModel(),
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -82,7 +81,11 @@ fun UsageScreen(
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     SummaryCard(stringResource(R.string.usage_total_calls), state.totalCalls.toString(), Modifier.weight(1f))
-                    SummaryCard(stringResource(R.string.usage_est_cost), "$" + "%.4f".format(state.totalCostUsd), Modifier.weight(1f))
+                    SummaryCard(
+                        stringResource(R.string.usage_est_cost),
+                        state.currencySymbol + "%.4f".format(state.totalCost),
+                        Modifier.weight(1f),
+                    )
                 }
             }
             item {
@@ -90,6 +93,9 @@ fun UsageScreen(
                     SummaryCard(stringResource(R.string.usage_images), state.totalImages.toString(), Modifier.weight(1f))
                     SummaryCard(stringResource(R.string.usage_tokens), formatCount(state.totalTokens), Modifier.weight(1f))
                 }
+            }
+            if (!state.pricesConfigured) {
+                item { PricingHint() }
             }
             item {
                 SectionCard(stringResource(R.string.usage_by_operation)) {
@@ -114,8 +120,8 @@ fun UsageScreen(
                     fontWeight = FontWeight.SemiBold,
                 )
             }
-            items(state.recent, key = { it.id }) { record ->
-                RecentRow(record)
+            items(state.recent, key = { it.record.id }) { entry ->
+                RecentRow(entry, state.currencySymbol)
             }
         }
     }
@@ -190,7 +196,25 @@ private fun BarRow(label: String, count: Int, max: Int, color: Color) {
 }
 
 @Composable
-private fun RecentRow(record: UsageRecord) {
+private fun PricingHint() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+        ),
+    ) {
+        Text(
+            stringResource(R.string.usage_pricing_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            modifier = Modifier.padding(14.dp),
+        )
+    }
+}
+
+@Composable
+private fun RecentRow(entry: UsageEntry, currencySymbol: String) {
+    val record = entry.record
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -225,7 +249,7 @@ private fun RecentRow(record: UsageRecord) {
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    "$" + "%.4f".format(record.estimatedCostUsd),
+                    currencySymbol + "%.4f".format(entry.cost),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.SemiBold,
                 )

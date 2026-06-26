@@ -94,6 +94,39 @@ fun SettingsTextField(
     )
 }
 
+/**
+ * Numeric (decimal) settings field backed by a [Double]. Empty input is treated as 0.0,
+ * so clearing the field is safe. Local text state is kept so partial input like "0." is not
+ * clobbered by the DataStore round-trip; it only resyncs when the persisted value actually
+ * differs from what is typed.
+ */
+@Composable
+fun SettingsPriceField(
+    value: Double,
+    onValueChange: (Double) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    supportingText: String? = null,
+) {
+    fun format(d: Double): String = if (d == 0.0) "" else d.toString()
+    var text by remember { mutableStateOf(format(value)) }
+    LaunchedEffect(value) {
+        if ((text.toDoubleOrNull() ?: 0.0) != value) text = format(value)
+    }
+    OutlinedTextField(
+        value = text,
+        onValueChange = {
+            text = it
+            onValueChange(it.toDoubleOrNull() ?: 0.0)
+        },
+        label = { Text(label) },
+        supportingText = supportingText?.let { { Text(it) } },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        singleLine = true,
+        modifier = modifier.fillMaxWidth(),
+    )
+}
+
 /** Masked API-key field with a show/hide eye toggle. */
 @Composable
 fun ApiKeyField(
