@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,9 +57,11 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.shotyou.app.R
 import com.shotyou.app.domain.model.PhotoGroup
 import com.shotyou.app.ui.categoryLabelRes
+import com.shotyou.app.ui.components.ZoomableImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -271,7 +274,11 @@ private fun StartBar(count: Int, starting: Boolean, onStart: () -> Unit) {
 private fun Thumbnail(uri: String, isReference: Boolean) {
     Box(modifier = Modifier.size(84.dp)) {
         AsyncImage(
-            model = uri,
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(uri)
+                .size(256)
+                .crossfade(true)
+                .build(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -311,10 +318,8 @@ private fun GroupViewer(group: PhotoGroup, onDismiss: () -> Unit) {
                     state = pagerState,
                     modifier = Modifier.fillMaxSize(),
                 ) { page ->
-                    AsyncImage(
+                    ZoomableImage(
                         model = uris[page],
-                        contentDescription = null,
-                        contentScale = ContentScale.Fit,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

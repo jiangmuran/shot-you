@@ -73,7 +73,9 @@ import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.shotyou.app.R
+import com.shotyou.app.ui.components.ZoomableImageDialog
 import kotlinx.coroutines.launch
 import com.shotyou.app.domain.model.GenerationJob
 import com.shotyou.app.domain.model.JobStatus
@@ -98,6 +100,8 @@ fun BatchScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     // Count for a consent-gated delete; the actual deletion happens in the system dialog.
     var consentCount by remember { mutableIntStateOf(0) }
+    // The candidate image currently shown full-screen in the zoom viewer (null = closed).
+    var zoomUri by remember { mutableStateOf<String?>(null) }
 
     val deleteLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult(),
@@ -170,7 +174,12 @@ fun BatchScreen(
                     .padding(top = 8.dp),
                 pageSpacing = 12.dp,
             ) { page ->
-                CandidatePage(job = state.jobs[page], index = page, onRetry = { viewModel.retry(state.jobs[page].id) })
+                CandidatePage(
+                    job = state.jobs[page],
+                    index = page,
+                    onRetry = { viewModel.retry(state.jobs[page].id) },
+                    onZoom = { uri -> zoomUri = uri },
+                )
             }
 
             PageIndicator(
@@ -226,11 +235,15 @@ fun BatchScreen(
                 Text(stringResource(R.string.batch_done), style = MaterialTheme.typography.titleMedium)
             }
         }
+
+        zoomUri?.let { uri ->
+            ZoomableImageDialog(model = uri, onDismiss = { zoomUri = null })
+        }
     }
 }
 
 @Composable
-private fun CandidatePage(job: GenerationJob, index: Int, onRetry: () -> Unit) {
+private fun CandidatePage(job: GenerationJob, index: Int, onRetry: () -> Unit, onZoom: (String) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -257,7 +270,9 @@ private fun CandidatePage(job: GenerationJob, index: Int, onRetry: () -> Unit) {
                             model = uri,
                             contentDescription = stringResource(R.string.batch_image_cd),
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clickable { onZoom(uri) },
                         )
                     }
                     job.variantLabel?.let { label ->
@@ -564,7 +579,11 @@ private fun KeepThumbnail(uri: String, selected: Boolean, onClick: () -> Unit) {
             .clickable(onClick = onClick),
     ) {
         AsyncImage(
-            model = uri,
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(uri)
+                .size(256)
+                .crossfade(true)
+                .build(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),

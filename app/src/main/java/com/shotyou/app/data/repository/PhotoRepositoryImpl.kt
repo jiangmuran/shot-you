@@ -236,9 +236,10 @@ class PhotoRepositoryImpl @Inject constructor(
         val parsed = uris.mapNotNull { runCatching { Uri.parse(it) }.getOrNull() }
         if (parsed.isEmpty()) return@withContext DeleteOutcome.Deleted(0)
         when {
-            // Android 11+ : one system consent dialog covers all items.
+            // Android 11+ : move to the system Trash (recoverable for ~30 days) with one
+            // consent dialog, instead of permanently deleting.
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ->
-                DeleteOutcome.NeedsConsent(MediaStore.createDeleteRequest(resolver, parsed).intentSender)
+                DeleteOutcome.NeedsConsent(MediaStore.createTrashRequest(resolver, parsed, true).intentSender)
             // Android 10 : deleting media the app doesn't own throws RecoverableSecurityException,
             // whose IntentSender we must launch for consent (rather than silently failing).
             Build.VERSION.SDK_INT == Build.VERSION_CODES.Q -> {

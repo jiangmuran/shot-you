@@ -1,6 +1,7 @@
 package com.shotyou.app.ui.screens.result
 
 import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,6 +45,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.shotyou.app.R
+import com.shotyou.app.ui.components.ZoomableImageDialog
 import com.shotyou.app.domain.model.GenerationJob
 import com.shotyou.app.domain.model.JobStatus
 
@@ -121,6 +126,7 @@ private fun SuccessState(job: GenerationJob, onRegenerate: () -> Unit) {
     val context = LocalContext.current
     val resultUri = job.resultUri
     val shareChooserTitle = stringResource(R.string.result_share_chooser)
+    var zoomed by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (resultUri != null) {
@@ -128,7 +134,9 @@ private fun SuccessState(job: GenerationJob, onRegenerate: () -> Unit) {
                 model = resultUri,
                 contentDescription = stringResource(R.string.result_image_cd),
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { zoomed = true },
             )
         }
 
@@ -172,6 +180,10 @@ private fun SuccessState(job: GenerationJob, onRegenerate: () -> Unit) {
                         .padding(top = 12.dp),
                 )
             }
+        }
+
+        if (zoomed && resultUri != null) {
+            ZoomableImageDialog(model = resultUri, onDismiss = { zoomed = false })
         }
     }
 }

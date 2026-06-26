@@ -78,7 +78,7 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
             }
             composable(Routes.QUEUE) {
                 ScreenContainer(padding) {
-                    QueueScreen(onOpenResult = { jobId -> navController.navigate(Routes.result(jobId)) })
+                    QueueScreen(onOpenTask = { batchId -> navController.navigate(Routes.batch(batchId)) })
                 }
             }
             composable(Routes.TEMPLATES) {

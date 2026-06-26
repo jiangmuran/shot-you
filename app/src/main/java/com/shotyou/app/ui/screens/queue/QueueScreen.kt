@@ -16,11 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
@@ -41,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,17 +48,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.shotyou.app.R
-import com.shotyou.app.domain.model.GenerationJob
-import com.shotyou.app.domain.model.JobStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QueueScreen(
-    onOpenResult: (String) -> Unit,
+    onOpenTask: (String) -> Unit,
     viewModel: QueueViewModel = hiltViewModel(),
 ) {
-    val jobs by viewModel.jobs.collectAsStateWithLifecycle()
+    val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     val paused by viewModel.paused.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -79,7 +78,7 @@ fun QueueScreen(
                             )
                         }
                     }
-                    if (jobs.any { it.status.isFinished }) {
+                    if (tasks.any { it.done > 0 }) {
                         TextButton(onClick = viewModel::clearFinished) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(4.dp))
@@ -90,7 +89,7 @@ fun QueueScreen(
             )
         },
     ) { padding ->
-        if (jobs.isEmpty()) {
+        if (tasks.isEmpty()) {
             EmptyQueue(padding)
         } else {
             Column(
@@ -99,8 +98,8 @@ fun QueueScreen(
                     .padding(padding),
             ) {
                 QueueProgressHeader(
-                    done = jobs.count { it.status.isFinished },
-                    total = jobs.size,
+                    done = tasks.sumOf { it.done },
+                    total = tasks.sumOf { it.total },
                     paused = paused,
                 )
                 LazyColumn(
@@ -108,13 +107,8 @@ fun QueueScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    items(jobs, key = { it.id }) { job ->
-                        JobCard(
-                            job = job,
-                            onOpenResult = { onOpenResult(job.id) },
-                            onRetry = { viewModel.retry(job.id) },
-                            onCancel = { viewModel.cancel(job.id) },
-                        )
+                    items(tasks, key = { it.batchId }) { task ->
+                        TaskCard(task = task, onOpen = { onOpenTask(task.batchId) })
                     }
                 }
             }
@@ -173,17 +167,10 @@ private fun QueueProgressHeader(done: Int, total: Int, paused: Boolean) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun JobCard(
-    job: GenerationJob,
-    onOpenResult: () -> Unit,
-    onRetry: () -> Unit,
-    onCancel: () -> Unit,
-) {
-    val clickable = job.status == JobStatus.SUCCEEDED
+private fun TaskCard(task: QueueTask, onOpen: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        onClick = onOpenResult,
-        enabled = clickable,
+        onClick = onOpen,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
         ),
@@ -194,27 +181,26 @@ private fun JobCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val thumbUri = job.resultUri ?: job.referenceUris.firstOrNull()
             Box(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                if (thumbUri != null) {
+                if (task.thumbnailUri != null) {
+                    // Sized request: decode to a small bitmap so the list stays smooth with
+                    // many items — never decode full-resolution images here.
                     AsyncImage(
-                        model = thumbUri,
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(task.thumbnailUri)
+                            .size(256)
+                            .crossfade(true)
+                            .build(),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                     )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(12.dp)),
-                    )
                 }
-                if (job.status == JobStatus.QUEUED || job.status == JobStatus.RUNNING) {
+                if (task.running || task.done < task.total) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         strokeWidth = 2.dp,
@@ -226,57 +212,45 @@ private fun JobCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = job.groupTitle?.takeIf { it.isNotBlank() }
-                        ?: stringResource(R.string.queue_untitled),
+                    text = task.title.takeIf { it.isNotBlank() }
+                        ?: stringResource(R.string.queue_task_fallback),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text = job.prompt,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                Spacer(Modifier.height(6.dp))
+                LinearProgressIndicator(
+                    progress = { if (task.total > 0) task.done.toFloat() / task.total else 0f },
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(6.dp))
-                StatusChip(job.status)
+                Text(
+                    text = taskStatusLine(task),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
 
-            when (job.status) {
-                JobStatus.FAILED -> IconButton(onClick = onRetry) {
-                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_retry))
-                }
-                JobStatus.QUEUED, JobStatus.RUNNING -> IconButton(onClick = onCancel) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_cancel))
-                }
-                else -> Unit
-            }
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = stringResource(R.string.queue_open_task),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
 
 @Composable
-private fun StatusChip(status: JobStatus) {
-    val (labelRes, color) = when (status) {
-        JobStatus.QUEUED -> R.string.queue_status_queued to Color(0xFF6750A4)
-        JobStatus.RUNNING -> R.string.queue_status_running to Color(0xFF1565C0)
-        JobStatus.SUCCEEDED -> R.string.queue_status_done to Color(0xFF2E7D32)
-        JobStatus.FAILED -> R.string.queue_status_failed to Color(0xFFC62828)
-        JobStatus.CANCELLED -> R.string.queue_status_cancelled to Color(0xFF757575)
+private fun taskStatusLine(task: QueueTask): String {
+    val parts = buildList {
+        add(stringResource(R.string.queue_task_done_count, task.done, task.total))
+        if (task.running) add(stringResource(R.string.queue_status_running))
+        if (task.failed > 0) add(stringResource(R.string.queue_task_failed_count, task.failed))
     }
-    val label = stringResource(labelRes)
-    AssistChip(
-        onClick = {},
-        enabled = false,
-        label = { Text(label, style = MaterialTheme.typography.labelMedium) },
-        colors = AssistChipDefaults.assistChipColors(
-            disabledContainerColor = color.copy(alpha = 0.14f),
-            disabledLabelColor = color,
-        ),
-        border = null,
-    )
+    return parts.joinToString(stringResource(R.string.queue_status_separator))
 }
 
 @Composable
@@ -298,6 +272,3 @@ private fun EmptyQueue(padding: PaddingValues) {
         )
     }
 }
-
-private val JobStatus.isFinished: Boolean
-    get() = this == JobStatus.SUCCEEDED || this == JobStatus.FAILED || this == JobStatus.CANCELLED
