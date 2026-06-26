@@ -98,6 +98,15 @@ class TemplateRepositoryImpl @Inject constructor(
 private object BuiltInTemplates {
     val en: List<Triple<String, String, List<String>>> = listOf(
         Triple(
+            "Pro Portrait Retouch",
+            "Studio-quality portrait of the same person; preserve their exact identity and features. " +
+                "Flawless even-toned skin that keeps natural texture and pores (never plastic), subtle " +
+                "brightening, bright clear eyes, neat lashes and brows, gently refined nose and lips, " +
+                "light natural makeup. 85mm lens look, soft directional light, gentle bokeh, vertical " +
+                "orientation. Beautiful yet completely believable — not over-processed. Photorealistic.",
+            listOf("portrait", "retouch", "people"),
+        ),
+        Triple(
             "Best Portrait",
             "From the reference photos of the same person, produce one flawless portrait: " +
                 "keep their true identity and facial features, choose the most natural and " +
@@ -129,6 +138,13 @@ private object BuiltInTemplates {
     )
 
     val zh: List<Triple<String, String, List<String>>> = listOf(
+        Triple(
+            "专业人像精修",
+            "为同一个人生成影楼级人像,严格保留其真实身份与五官特征。肤色均匀无瑕但保留自然肤质与毛孔" +
+                "(绝不塑料感),适度提亮,双眼明亮清澈,睫毛与眉形干净,鼻形与唇形微调更精致,淡雅自然" +
+                "妆容。85mm 镜头质感,柔和定向光,自然背景虚化,竖向构图。美而真实可信,不过度处理。写实风格。",
+            listOf("人像", "精修", "人物"),
+        ),
         Triple(
             "最佳人像",
             "根据同一个人的参考照片，生成一张无瑕的人像：" +

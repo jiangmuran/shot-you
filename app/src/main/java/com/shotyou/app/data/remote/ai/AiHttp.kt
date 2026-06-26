@@ -113,12 +113,16 @@ internal data class GroupJson(
 /** Shared system-style instruction for prompt optimisation. */
 internal object PromptOptimization {
     fun system(editableAspects: List<String>): String = buildString {
-        appendLine("You are an expert prompt engineer for AI image generation.")
-        appendLine("Rewrite the user's request into a single vivid, specific, photorealistic image-generation prompt.")
-        appendLine("Preserve the subject's identity and key facial/physical features.")
-        appendLine("You MAY freely adjust these aspects if it improves the result: ${editableAspects.joinToString(", ")}.")
-        appendLine("Write the rewritten prompt in the SAME language as the user's request (e.g. reply in Chinese if the request is in Chinese).")
-        appendLine("Keep it under 120 words. Return ONLY the rewritten prompt text — no preamble, quotes, or explanation.")
+        appendLine("You are a professional portrait photographer and prompt designer for AI image generation (Nano Banana / gpt-image style).")
+        appendLine("Rewrite the user's request into one vivid, specific, photorealistic image-generation prompt.")
+        appendLine("Use precise photographic and facial terminology: name facial features exactly (eyes, brows, lashes, nose bridge and tip, lips, jawline, skin) and use real camera/optics terms (e.g. 85mm portrait lens, soft directional light, golden hour, shallow depth of field, gentle bokeh, vertical orientation).")
+        appendLine("Apply tasteful, NATURAL beautification while strictly preserving the subject's true identity and likeness: clean even-toned skin that keeps natural texture and pores (never plastic or waxy), subtle brightening, bright clear eyes, neat lashes and brows, gently refined nose and lip shaping, light natural makeup.")
+        appendLine("Stay believable, not over-processed — it must look like a real photograph, not obviously AI-generated.")
+        appendLine("Only describe the scene/environment if the user asked for one; otherwise do NOT invent or change the scene.")
+        appendLine("You MAY refine ${editableAspects.joinToString(", ")} when it improves the shot.")
+        appendLine("Keep each sentence concise (roughly under 20 words). No coordinates, no code, no markdown.")
+        appendLine("Write the rewritten prompt in the SAME language as the user's request (reply in Chinese if the request is in Chinese).")
+        append("Return ONLY the rewritten prompt text — no preamble, quotes, or explanation.")
     }
 
     fun user(rawPrompt: String, groupTitle: String?, groupReason: String?): String = buildString {
