@@ -1,6 +1,6 @@
 package com.shotyou.app.di
 
-import com.shotyou.app.data.remote.ai.PlaceholderAiProviderFactory
+import com.shotyou.app.data.remote.ai.DefaultAiProviderFactory
 import com.shotyou.app.domain.ai.AiProviderFactory
 import dagger.Binds
 import dagger.Module
@@ -18,5 +18,5 @@ abstract class AiModule {
 
     @Binds
     @Singleton
-    abstract fun bindAiProviderFactory(impl: PlaceholderAiProviderFactory): AiProviderFactory
+    abstract fun bindAiProviderFactory(impl: DefaultAiProviderFactory): AiProviderFactory
 }
