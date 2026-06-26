@@ -33,11 +33,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.shotyou.app.R
 import com.shotyou.app.domain.model.PhotoGroup
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,10 +55,13 @@ fun GroupsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Groups") },
+                title = { Text(stringResource(R.string.groups_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
             )
@@ -126,7 +132,7 @@ private fun GroupCard(group: PhotoGroup, onClick: () -> Unit) {
                 }
             }
             Text(
-                text = "${group.size} ${if (group.size == 1) "photo" else "photos"}",
+                text = pluralStringResource(R.plurals.groups_photo_count, group.size, group.size),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 12.dp),
@@ -155,7 +161,7 @@ private fun Thumbnail(uri: String, isReference: Boolean) {
             ) {
                 Icon(
                     imageVector = Icons.Filled.Star,
-                    contentDescription = "Reference photo",
+                    contentDescription = stringResource(R.string.groups_reference_cd),
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier
                         .padding(3.dp)
@@ -182,12 +188,12 @@ private fun EmptyGroups(modifier: Modifier = Modifier) {
             modifier = Modifier.size(48.dp),
         )
         Text(
-            text = "No groups yet",
+            text = stringResource(R.string.groups_empty_title),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 16.dp),
         )
         Text(
-            text = "Pick photos in Library and group them with AI to see clusters here.",
+            text = stringResource(R.string.groups_empty_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp),

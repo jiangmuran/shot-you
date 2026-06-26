@@ -39,11 +39,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.shotyou.app.R
 import com.shotyou.app.domain.model.GenerationJob
 import com.shotyou.app.domain.model.JobStatus
 
@@ -58,13 +60,13 @@ fun QueueScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Queue") },
+                title = { Text(stringResource(R.string.queue_title)) },
                 actions = {
                     if (jobs.any { it.status.isFinished }) {
                         TextButton(onClick = viewModel::clearFinished) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Clear finished")
+                            Text(stringResource(R.string.queue_clear_finished))
                         }
                     }
                 },
@@ -149,7 +151,8 @@ private fun JobCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = job.groupTitle?.takeIf { it.isNotBlank() } ?: "Untitled",
+                    text = job.groupTitle?.takeIf { it.isNotBlank() }
+                        ?: stringResource(R.string.queue_untitled),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
@@ -168,10 +171,10 @@ private fun JobCard(
 
             when (job.status) {
                 JobStatus.FAILED -> IconButton(onClick = onRetry) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Retry")
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_retry))
                 }
                 JobStatus.QUEUED, JobStatus.RUNNING -> IconButton(onClick = onCancel) {
-                    Icon(Icons.Default.Close, contentDescription = "Cancel")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_cancel))
                 }
                 else -> Unit
             }
@@ -181,13 +184,14 @@ private fun JobCard(
 
 @Composable
 private fun StatusChip(status: JobStatus) {
-    val (label, color) = when (status) {
-        JobStatus.QUEUED -> "Queued" to Color(0xFF6750A4)
-        JobStatus.RUNNING -> "Running" to Color(0xFF1565C0)
-        JobStatus.SUCCEEDED -> "Done" to Color(0xFF2E7D32)
-        JobStatus.FAILED -> "Failed" to Color(0xFFC62828)
-        JobStatus.CANCELLED -> "Cancelled" to Color(0xFF757575)
+    val (labelRes, color) = when (status) {
+        JobStatus.QUEUED -> R.string.queue_status_queued to Color(0xFF6750A4)
+        JobStatus.RUNNING -> R.string.queue_status_running to Color(0xFF1565C0)
+        JobStatus.SUCCEEDED -> R.string.queue_status_done to Color(0xFF2E7D32)
+        JobStatus.FAILED -> R.string.queue_status_failed to Color(0xFFC62828)
+        JobStatus.CANCELLED -> R.string.queue_status_cancelled to Color(0xFF757575)
     }
+    val label = stringResource(labelRes)
     AssistChip(
         onClick = {},
         enabled = false,
@@ -210,10 +214,10 @@ private fun EmptyQueue(padding: PaddingValues) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("No jobs yet", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.queue_empty_title), style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Generated images you queue will appear here with live status.",
+            stringResource(R.string.queue_empty_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

@@ -1,58 +1,75 @@
 package com.shotyou.app.domain.model
 
-/** Which backend a given AI role uses. */
-enum class AiProviderType(val displayName: String) {
-    GEMINI("Google Gemini"),
-    OPENAI("OpenAI"),
-}
-
-/**
- * Default model ids per provider. Centralised so the UI and providers agree.
- * Users may override any of these in Settings.
- */
+/** Default OpenAI-compatible model ids. Users may override any of these in Settings. */
 object DefaultModels {
-    const val GEMINI_VLM = "gemini-2.5-flash"
-    const val GEMINI_LLM = "gemini-2.5-flash"
-    const val GEMINI_IMAGE = "gemini-2.5-flash-image"
-
-    const val OPENAI_VLM = "gpt-4o"
-    const val OPENAI_LLM = "gpt-4o-mini"
-    const val OPENAI_IMAGE = "gpt-image-1"
+    const val API_BASE_URL = "https://api.openai.com/v1"
+    const val VLM = "gpt-4o"
+    const val LLM = "gpt-4o-mini"
+    const val IMAGE = "gpt-image-1"
 }
 
 /**
- * All user-configurable AI settings. Persisted via DataStore. API keys live on-device
- * only; the app calls providers directly.
+ * A look the user can pick for a generation. [directive] is the (English) instruction
+ * fed to the image model; the display label is localized in the UI by [id].
+ */
+enum class StylePreset(val id: String, val directive: String) {
+    REALISTIC(
+        "realistic",
+        "photorealistic and faithful to the original subject, natural skin texture and lighting, no over-processing",
+    ),
+    BEAUTIFY(
+        "beautify",
+        "subtly beautified: clear smooth skin, flattering soft light, bright eyes, polished yet still natural",
+    ),
+    CINEMATIC(
+        "cinematic",
+        "cinematic look with dramatic lighting, shallow depth of field and filmic color grading",
+    ),
+    FRESH(
+        "fresh",
+        "clean fresh natural style, soft daylight, airy bright tones and true-to-life colors",
+    ),
+    ARTISTIC(
+        "artistic",
+        "artistic stylized rendering with expressive color and light and a tasteful creative interpretation",
+    );
+
+    companion object {
+        fun fromId(id: String): StylePreset = entries.firstOrNull { it.id == id } ?: REALISTIC
+    }
+}
+
+/**
+ * All user-configurable settings. Persisted via DataStore. The API key lives on-device
+ * only; the app calls the (OpenAI-compatible) endpoint directly — including custom hosts.
  */
 data class AiSettings(
-    val vlmProvider: AiProviderType = AiProviderType.GEMINI,
-    val llmProvider: AiProviderType = AiProviderType.GEMINI,
-    val imageProvider: AiProviderType = AiProviderType.GEMINI,
-
-    val vlmModel: String = DefaultModels.GEMINI_VLM,
-    val llmModel: String = DefaultModels.GEMINI_LLM,
-    val imageModel: String = DefaultModels.GEMINI_IMAGE,
-
-    val geminiKey: String = "",
-    val openAiKey: String = "",
+    // OpenAI-compatible endpoint
+    val apiBaseUrl: String = DefaultModels.API_BASE_URL,
+    val apiKey: String = "",
+    val vlmModel: String = DefaultModels.VLM,
+    val llmModel: String = DefaultModels.LLM,
+    val imageModel: String = DefaultModels.IMAGE,
 
     // Background queue behaviour
     val maxConcurrentJobs: Int = 1,
     val minRequestIntervalMs: Long = 0L,
     val autoRetryOnFailure: Boolean = true,
     val maxRetries: Int = 2,
+    val requireWifi: Boolean = false,
+
+    // Background persistence & notifications
+    val runInBackground: Boolean = false,
+    val progressNotifications: Boolean = true,
 
     // Prompt behaviour
     val autoOptimizePrompt: Boolean = true,
-    val requireWifi: Boolean = false,
-) {
-    fun keyFor(type: AiProviderType): String = when (type) {
-        AiProviderType.GEMINI -> geminiKey
-        AiProviderType.OPENAI -> openAiKey
-    }
+    val defaultStyle: String = StylePreset.REALISTIC.id,
+    val defaultIntensity: Int = 50,
 
+    // UI
+    val appLanguage: String = "system", // "system" | "en" | "zh"
+) {
     val isConfigured: Boolean
-        get() = keyFor(vlmProvider).isNotBlank() &&
-            keyFor(llmProvider).isNotBlank() &&
-            keyFor(imageProvider).isNotBlank()
+        get() = apiKey.isNotBlank() && apiBaseUrl.isNotBlank()
 }

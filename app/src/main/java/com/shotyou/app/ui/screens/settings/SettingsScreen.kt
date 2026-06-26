@@ -1,7 +1,14 @@
 package com.shotyou.app.ui.screens.settings
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +20,7 @@ import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -28,23 +36,46 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.shotyou.app.domain.model.AiProviderType
+import com.shotyou.app.R
 import com.shotyou.app.domain.model.AiSettings
 import com.shotyou.app.domain.model.DefaultModels
+import com.shotyou.app.domain.model.StylePreset
+import com.shotyou.app.ui.labelRes
+import com.shotyou.app.util.AppLocale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle(initialValue = AiSettings())
+    val context = LocalContext.current
+
+    // Ask for notification permission the first time the user enables a background feature
+    // that needs to post notifications (Android 13+).
+    val notificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { /* result handled by the OS; the toggle itself is already persisted */ }
+
+    fun requestNotificationsIfNeeded(enabling: Boolean) {
+        if (!enabling) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ),
@@ -61,87 +92,96 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         ) {
             item { StatusBanner(settings) }
 
-            item { SettingsSectionHeader("AI Providers") }
-            item {
-                ProviderRoleCard(
-                    role = "Vision (VLM)",
-                    description = "Groups your photos by understanding their content.",
-                    provider = settings.vlmProvider,
-                    model = settings.vlmModel,
-                    onProviderChange = { p -> viewModel.update { it.copy(vlmProvider = p) } },
-                    onModelChange = { m -> viewModel.update { it.copy(vlmModel = m) } },
-                    placeholderFor = { defaultVlm(it) },
-                )
-            }
-            item {
-                ProviderRoleCard(
-                    role = "Prompt (LLM)",
-                    description = "Refines and optimises your text prompts.",
-                    provider = settings.llmProvider,
-                    model = settings.llmModel,
-                    onProviderChange = { p -> viewModel.update { it.copy(llmProvider = p) } },
-                    onModelChange = { m -> viewModel.update { it.copy(llmModel = m) } },
-                    placeholderFor = { defaultLlm(it) },
-                )
-            }
-            item {
-                ProviderRoleCard(
-                    role = "Image",
-                    description = "Generates the final images.",
-                    provider = settings.imageProvider,
-                    model = settings.imageModel,
-                    onProviderChange = { p -> viewModel.update { it.copy(imageProvider = p) } },
-                    onModelChange = { m -> viewModel.update { it.copy(imageModel = m) } },
-                    placeholderFor = { defaultImage(it) },
-                )
-            }
-
-            item { SettingsSectionHeader("API Keys") }
+            // 1. API
+            item { SettingsSectionHeader(stringResource(R.string.settings_section_api)) }
             item {
                 SettingsCard {
-                    ApiKeyField(
-                        value = settings.geminiKey,
-                        onValueChange = { k -> viewModel.update { it.copy(geminiKey = k) } },
-                        label = "${AiProviderType.GEMINI.displayName} key",
+                    SettingsTextField(
+                        value = settings.apiBaseUrl,
+                        onValueChange = { v -> viewModel.update { it.copy(apiBaseUrl = v) } },
+                        label = stringResource(R.string.settings_api_host_label),
+                        placeholder = DefaultModels.API_BASE_URL,
+                        supportingText = stringResource(R.string.settings_api_host_helper),
                     )
                     ApiKeyField(
-                        value = settings.openAiKey,
-                        onValueChange = { k -> viewModel.update { it.copy(openAiKey = k) } },
-                        label = "${AiProviderType.OPENAI.displayName} key",
+                        value = settings.apiKey,
+                        onValueChange = { v -> viewModel.update { it.copy(apiKey = v) } },
+                        label = stringResource(R.string.settings_api_key_label),
+                    )
+                    SettingsTextField(
+                        value = settings.vlmModel,
+                        onValueChange = { v -> viewModel.update { it.copy(vlmModel = v) } },
+                        label = stringResource(R.string.settings_model_vlm_label),
+                        placeholder = DefaultModels.VLM,
+                        supportingText = stringResource(R.string.settings_model_vlm_helper),
+                    )
+                    SettingsTextField(
+                        value = settings.llmModel,
+                        onValueChange = { v -> viewModel.update { it.copy(llmModel = v) } },
+                        label = stringResource(R.string.settings_model_llm_label),
+                        placeholder = DefaultModels.LLM,
+                        supportingText = stringResource(R.string.settings_model_llm_helper),
+                    )
+                    SettingsTextField(
+                        value = settings.imageModel,
+                        onValueChange = { v -> viewModel.update { it.copy(imageModel = v) } },
+                        label = stringResource(R.string.settings_model_image_label),
+                        placeholder = DefaultModels.IMAGE,
+                        supportingText = stringResource(R.string.settings_model_image_helper),
                     )
                 }
             }
 
-            item { SettingsSectionHeader("Queue & quota") }
+            // 2. Generation defaults
+            item { SettingsSectionHeader(stringResource(R.string.settings_section_generation)) }
+            item {
+                SettingsCard {
+                    Text(
+                        stringResource(R.string.settings_default_style),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    StyleChips(
+                        selectedId = settings.defaultStyle,
+                        onSelect = { id -> viewModel.update { it.copy(defaultStyle = id) } },
+                    )
+                    SliderRow(
+                        title = stringResource(R.string.settings_default_intensity),
+                        value = settings.defaultIntensity.toFloat(),
+                        valueLabel = stringResource(R.string.generate_intensity_value, settings.defaultIntensity),
+                        range = 0f..100f,
+                        steps = 0,
+                        onValueChange = { v -> viewModel.update { it.copy(defaultIntensity = v.toInt()) } },
+                    )
+                }
+            }
+
+            // 3. Queue
+            item { SettingsSectionHeader(stringResource(R.string.settings_section_queue)) }
             item {
                 SettingsCard {
                     SliderRow(
-                        title = "Max concurrent jobs",
+                        title = stringResource(R.string.settings_max_concurrent),
                         value = settings.maxConcurrentJobs.toFloat(),
                         valueLabel = settings.maxConcurrentJobs.toString(),
                         range = 1f..4f,
                         steps = 2,
-                        onValueChange = { v ->
-                            viewModel.update { it.copy(maxConcurrentJobs = v.toInt()) }
-                        },
+                        onValueChange = { v -> viewModel.update { it.copy(maxConcurrentJobs = v.toInt()) } },
                     )
                     SliderRow(
-                        title = "Min request interval",
+                        title = stringResource(R.string.settings_min_interval),
                         value = settings.minRequestIntervalMs.toFloat(),
-                        valueLabel = formatInterval(settings.minRequestIntervalMs),
+                        valueLabel = intervalLabel(settings.minRequestIntervalMs),
                         range = 0f..5000f,
                         steps = 9,
-                        onValueChange = { v ->
-                            viewModel.update { it.copy(minRequestIntervalMs = v.toLong()) }
-                        },
+                        onValueChange = { v -> viewModel.update { it.copy(minRequestIntervalMs = v.toLong()) } },
                     )
                     SwitchRow(
-                        title = "Auto-retry on failure",
+                        title = stringResource(R.string.settings_auto_retry),
                         checked = settings.autoRetryOnFailure,
                         onCheckedChange = { c -> viewModel.update { it.copy(autoRetryOnFailure = c) } },
                     )
                     SliderRow(
-                        title = "Max retries",
+                        title = stringResource(R.string.settings_max_retries),
                         value = settings.maxRetries.toFloat(),
                         valueLabel = settings.maxRetries.toString(),
                         range = 0f..5f,
@@ -150,22 +190,62 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                         onValueChange = { v -> viewModel.update { it.copy(maxRetries = v.toInt()) } },
                     )
                     SwitchRow(
-                        title = "Require Wi-Fi",
-                        description = "Only run jobs while connected to Wi-Fi.",
+                        title = stringResource(R.string.settings_require_wifi),
+                        description = stringResource(R.string.settings_require_wifi_desc),
                         checked = settings.requireWifi,
                         onCheckedChange = { c -> viewModel.update { it.copy(requireWifi = c) } },
                     )
                 }
             }
 
-            item { SettingsSectionHeader("Prompt") }
+            // 4. Background
+            item { SettingsSectionHeader(stringResource(R.string.settings_section_background)) }
             item {
                 SettingsCard {
                     SwitchRow(
-                        title = "Auto-optimise prompts",
-                        description = "Let the prompt LLM refine each prompt before image generation.",
+                        title = stringResource(R.string.settings_run_in_background),
+                        description = stringResource(R.string.settings_run_in_background_desc),
+                        checked = settings.runInBackground,
+                        onCheckedChange = { c ->
+                            requestNotificationsIfNeeded(c)
+                            viewModel.update { it.copy(runInBackground = c) }
+                        },
+                    )
+                    SwitchRow(
+                        title = stringResource(R.string.settings_progress_notifications),
+                        description = stringResource(R.string.settings_progress_notifications_desc),
+                        checked = settings.progressNotifications,
+                        onCheckedChange = { c ->
+                            requestNotificationsIfNeeded(c)
+                            viewModel.update { it.copy(progressNotifications = c) }
+                        },
+                    )
+                }
+            }
+
+            // 5. Prompt
+            item { SettingsSectionHeader(stringResource(R.string.settings_section_prompt)) }
+            item {
+                SettingsCard {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_auto_optimize),
+                        description = stringResource(R.string.settings_auto_optimize_desc),
                         checked = settings.autoOptimizePrompt,
                         onCheckedChange = { c -> viewModel.update { it.copy(autoOptimizePrompt = c) } },
+                    )
+                }
+            }
+
+            // 6. Language
+            item { SettingsSectionHeader(stringResource(R.string.settings_section_language)) }
+            item {
+                SettingsCard {
+                    LanguageSelector(
+                        current = settings.appLanguage,
+                        onSelect = { tag ->
+                            AppLocale.apply(tag)
+                            viewModel.update { it.copy(appLanguage = tag) }
+                        },
                     )
                 }
             }
@@ -201,15 +281,15 @@ private fun StatusBanner(settings: AiSettings) {
             Icon(icon, contentDescription = null)
             Column {
                 Text(
-                    if (configured) "Ready to go" else "Setup needed",
+                    stringResource(
+                        if (configured) R.string.settings_status_ready_title else R.string.settings_status_setup_title,
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    if (configured) {
-                        "All selected providers have an API key."
-                    } else {
-                        "Add an API key below for each provider you use."
-                    },
+                    stringResource(
+                        if (configured) R.string.settings_status_ready_body else R.string.settings_status_setup_body,
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -217,42 +297,38 @@ private fun StatusBanner(settings: AiSettings) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun StyleChips(selectedId: String, onSelect: (String) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        StylePreset.entries.forEach { preset ->
+            FilterChip(
+                selected = selectedId == preset.id,
+                onClick = { onSelect(preset.id) },
+                label = { Text(stringResource(preset.labelRes())) },
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ProviderRoleCard(
-    role: String,
-    description: String,
-    provider: AiProviderType,
-    model: String,
-    onProviderChange: (AiProviderType) -> Unit,
-    onModelChange: (String) -> Unit,
-    placeholderFor: (AiProviderType) -> String,
-) {
-    SettingsCard {
-        Text(role, style = MaterialTheme.typography.titleMedium)
-        Text(
-            description,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        val options = AiProviderType.entries
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            options.forEachIndexed { index, type ->
-                SegmentedButton(
-                    selected = provider == type,
-                    onClick = { onProviderChange(type) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                ) {
-                    Text(type.displayName)
-                }
+private fun LanguageSelector(current: String, onSelect: (String) -> Unit) {
+    val options = listOf(
+        "system" to R.string.settings_language_system,
+        "zh" to R.string.settings_language_zh,
+        "en" to R.string.settings_language_en,
+    )
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, (tag, labelRes) ->
+            SegmentedButton(
+                selected = current == tag,
+                onClick = { onSelect(tag) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+            ) {
+                Text(stringResource(labelRes))
             }
         }
-        SettingsTextField(
-            value = model,
-            onValueChange = onModelChange,
-            label = "Model id",
-            placeholder = placeholderFor(provider),
-        )
     }
 }
 
@@ -292,20 +368,9 @@ private fun SliderRow(
     }
 }
 
-private fun formatInterval(ms: Long): String =
-    if (ms == 0L) "Off" else if (ms < 1000) "$ms ms" else "%.1f s".format(ms / 1000f)
-
-private fun defaultVlm(type: AiProviderType): String = when (type) {
-    AiProviderType.GEMINI -> DefaultModels.GEMINI_VLM
-    AiProviderType.OPENAI -> DefaultModels.OPENAI_VLM
-}
-
-private fun defaultLlm(type: AiProviderType): String = when (type) {
-    AiProviderType.GEMINI -> DefaultModels.GEMINI_LLM
-    AiProviderType.OPENAI -> DefaultModels.OPENAI_LLM
-}
-
-private fun defaultImage(type: AiProviderType): String = when (type) {
-    AiProviderType.GEMINI -> DefaultModels.GEMINI_IMAGE
-    AiProviderType.OPENAI -> DefaultModels.OPENAI_IMAGE
+@Composable
+private fun intervalLabel(ms: Long): String = when {
+    ms == 0L -> stringResource(R.string.settings_interval_off)
+    ms < 1000 -> stringResource(R.string.settings_interval_ms, ms.toInt())
+    else -> stringResource(R.string.settings_interval_seconds, ms / 1000f)
 }

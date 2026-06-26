@@ -36,11 +36,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.shotyou.app.R
 import com.shotyou.app.domain.model.Template
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,7 +54,7 @@ fun TemplatesScreen(viewModel: TemplatesViewModel = hiltViewModel()) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Templates") },
+                title = { Text(stringResource(R.string.templates_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ),
@@ -62,7 +64,7 @@ fun TemplatesScreen(viewModel: TemplatesViewModel = hiltViewModel()) {
             ExtendedFloatingActionButton(
                 onClick = { editing = Template(name = "", prompt = "") },
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text("New template") },
+                text = { Text(stringResource(R.string.templates_new)) },
             )
         },
     ) { padding ->
@@ -130,7 +132,7 @@ private fun TemplateCard(
                     Badge(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ) { Text("Built-in") }
+                    ) { Text(stringResource(R.string.templates_builtin)) }
                 }
             }
             Text(
@@ -168,9 +170,9 @@ private fun EmptyState(modifier: Modifier = Modifier) {
             tint = MaterialTheme.colorScheme.primary,
         )
         Spacer(Modifier.padding(8.dp))
-        Text("No templates yet", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.templates_empty_title), style = MaterialTheme.typography.titleMedium)
         Text(
-            "Tap \"New template\" to create your first reusable prompt.",
+            stringResource(R.string.templates_empty_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

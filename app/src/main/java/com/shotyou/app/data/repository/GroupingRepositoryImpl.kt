@@ -31,6 +31,7 @@ class GroupingRepositoryImpl @Inject constructor(
 
         val settings = settingsRepository.current()
         val provider = providerFactory.vlm(settings)
+        val providerLabel = hostLabel(settings.apiBaseUrl)
 
         val images = uris.map { photoRepository.loadAiImage(it) }
         val result = provider.groupSimilar(images, instruction)
@@ -61,7 +62,7 @@ class GroupingRepositoryImpl @Inject constructor(
 
         usageRepository.record(
             UsageRecord(
-                provider = settings.vlmProvider.name,
+                provider = providerLabel,
                 model = provider.model,
                 operation = AiOperation.GROUPING,
                 promptTokens = result.usage.promptTokens,
@@ -74,4 +75,11 @@ class GroupingRepositoryImpl @Inject constructor(
 
         return finalGroups
     }
+
+    /** Short usage label derived from the configured API host, e.g. "api.openai.com". */
+    private fun hostLabel(apiBaseUrl: String): String =
+        runCatching { java.net.URI(apiBaseUrl.trim()).host }
+            .getOrNull()
+            ?.takeIf { it.isNotBlank() }
+            ?: "openai"
 }

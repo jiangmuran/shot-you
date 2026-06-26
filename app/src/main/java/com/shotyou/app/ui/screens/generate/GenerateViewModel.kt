@@ -3,9 +3,12 @@ package com.shotyou.app.ui.screens.generate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shotyou.app.domain.ai.AiException
+import com.shotyou.app.domain.ai.PromptComposer
 import com.shotyou.app.domain.model.PhotoGroup
+import com.shotyou.app.domain.model.StylePreset
 import com.shotyou.app.domain.model.Template
 import com.shotyou.app.domain.repository.GenerationRepository
+import com.shotyou.app.domain.repository.SettingsRepository
 import com.shotyou.app.domain.repository.TemplateRepository
 import com.shotyou.app.domain.session.SessionStore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +25,8 @@ data class GenerateUiState(
     val selectedReferenceUris: Set<String> = emptySet(),
     val prompt: String = "",
     val templates: List<Template> = emptyList(),
+    val style: StylePreset = StylePreset.REALISTIC,
+    val intensity: Int = 50,
     val optimizing: Boolean = false,
     val enqueuing: Boolean = false,
     val error: String? = null,
@@ -39,6 +44,7 @@ class GenerateViewModel @Inject constructor(
     private val sessionStore: SessionStore,
     private val templateRepository: TemplateRepository,
     private val generationRepository: GenerationRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val mutableState = MutableStateFlow(InternalState())
@@ -47,14 +53,22 @@ class GenerateViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val uiState: StateFlow<GenerateUiState> =
-        combine(sessionStore.activeGroup, mutableState, templates) { group, state, templateList ->
-            // Initialise reference selection from the group the first time we see it.
+        combine(
+            sessionStore.activeGroup,
+            mutableState,
+            templates,
+            settingsRepository.settings,
+        ) { group, state, templateList, settings ->
+            // Initialise reference selection from the group the first time we see it,
+            // and style/intensity from the user's saved defaults until they tweak them.
             val selection = state.selection ?: defaultSelection(group)
             GenerateUiState(
                 group = group,
                 selectedReferenceUris = selection,
                 prompt = state.prompt,
                 templates = templateList,
+                style = state.style ?: StylePreset.fromId(settings.defaultStyle),
+                intensity = state.intensity ?: settings.defaultIntensity,
                 optimizing = state.optimizing,
                 enqueuing = state.enqueuing,
                 error = state.error,
@@ -69,6 +83,10 @@ class GenerateViewModel @Inject constructor(
     }
 
     fun onPromptChange(value: String) = mutableState.update { it.copy(prompt = value) }
+
+    fun setStyle(style: StylePreset) = mutableState.update { it.copy(style = style) }
+
+    fun setIntensity(intensity: Int) = mutableState.update { it.copy(intensity = intensity.coerceIn(0, 100)) }
 
     fun applyTemplate(template: Template) = mutableState.update { it.copy(prompt = template.prompt) }
 
@@ -108,10 +126,19 @@ class GenerateViewModel @Inject constructor(
         mutableState.update { it.copy(enqueuing = true, error = null) }
         viewModelScope.launch {
             try {
+                val settings = settingsRepository.current()
+                val style = state.style ?: StylePreset.fromId(settings.defaultStyle)
+                val intensity = state.intensity ?: settings.defaultIntensity
+                val finalPrompt = PromptComposer.compose(
+                    basePrompt = state.prompt,
+                    style = style,
+                    intensity = intensity,
+                    suggestion = null,
+                )
                 val jobId = generationRepository.enqueue(
                     groupId = group.id,
                     groupTitle = group.title,
-                    prompt = state.prompt,
+                    prompt = finalPrompt,
                     referenceUris = references,
                 )
                 mutableState.update { it.copy(enqueuing = false) }
@@ -125,6 +152,8 @@ class GenerateViewModel @Inject constructor(
     private data class InternalState(
         val selection: Set<String>? = null,
         val prompt: String = "",
+        val style: StylePreset? = null,
+        val intensity: Int? = null,
         val optimizing: Boolean = false,
         val enqueuing: Boolean = false,
         val error: String? = null,

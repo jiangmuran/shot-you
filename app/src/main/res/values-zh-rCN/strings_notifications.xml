@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Generation notification channel -->
+    <string name="notif_channel_generation_name">生成</string>
+    <string name="notif_channel_generation_desc">后台照片生成进度</string>
+
+    <!-- Ongoing progress notification -->
+    <string name="notif_generating_title">正在生成你的照片…</string>
+    <string name="notif_generating_text">请稍候。</string>
+
+    <!-- Terminal notifications -->
+    <string name="notif_success_title">你的照片已就绪</string>
+    <string name="notif_success_text">点按查看生成的照片。</string>
+    <string name="notif_failed_title">生成失败</string>
+    <string name="notif_failed_text">出现了一些问题，请重试。</string>
+</resources>

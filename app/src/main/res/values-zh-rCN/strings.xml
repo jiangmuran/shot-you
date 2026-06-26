@@ -1,0 +1,188 @@
+<resources>
+    <string name="app_name">Shot You</string>
+
+    <!-- Common actions -->
+    <string name="action_back">返回</string>
+    <string name="action_clear">清空</string>
+    <string name="action_manage">管理</string>
+    <string name="action_retry">重试</string>
+    <string name="action_cancel">取消</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_library">图库</string>
+    <string name="nav_queue">队列</string>
+    <string name="nav_templates">模板</string>
+    <string name="nav_usage">用量</string>
+    <string name="nav_settings">设置</string>
+
+    <!-- Library -->
+    <string name="library_title">图库</string>
+    <string name="library_selected_count">已选 %1$d 张</string>
+    <string name="library_group_with_ai">用 AI 分组（%1$d 张）</string>
+    <string name="library_select_min_hint">至少选择 2 张照片才能分组</string>
+    <string name="library_grouping_title">正在用 AI 分组…</string>
+    <string name="library_grouping_body">正在从所选照片中挑选最佳画面</string>
+    <string name="library_partial_access">你已授权访问所选照片</string>
+    <string name="library_permission_title">访问你的照片</string>
+    <string name="library_permission_body">Shot You 需要访问你的相册，以便挑选照片并用 AI 对最佳画面进行分组。</string>
+    <string name="library_grant_access">授予访问权限</string>
+    <string name="library_empty_title">还没有照片</string>
+    <string name="library_empty_body">你拍摄的照片会显示在这里，随时可用 AI 分组和增强。</string>
+    <string name="library_loading">正在加载照片…</string>
+    <string name="library_selected_cd">已选中</string>
+
+    <!-- Groups -->
+    <string name="groups_title">分组</string>
+    <string name="groups_empty_title">还没有分组</string>
+    <string name="groups_empty_body">在图库中挑选照片并用 AI 分组，分好的相似画面会显示在这里。</string>
+    <string name="groups_reference_cd">参考照片</string>
+    <plurals name="groups_photo_count">
+        <item quantity="other">%d 张照片</item>
+    </plurals>
+
+    <!-- Generate -->
+    <string name="generate_title">生成</string>
+    <string name="generate_references_title">参考照片</string>
+    <string name="generate_references_sub">点击选择喂给模型的画面</string>
+    <string name="generate_template_title">模板</string>
+    <string name="generate_template_sub">从已保存的提示词开始</string>
+    <string name="generate_no_templates">还没有保存的模板。</string>
+    <string name="generate_style_title">风格</string>
+    <string name="generate_style_sub">选择你想要的效果</string>
+    <string name="generate_intensity_title">强度</string>
+    <string name="generate_intensity_sub">风格应用的强弱程度</string>
+    <string name="generate_prompt_title">提示词</string>
+    <string name="generate_prompt_sub">描述你想要的画面</string>
+    <string name="generate_prompt_placeholder">例如：影棚人像，柔和窗光，自信的微笑</string>
+    <string name="generate_optimize">用 AI 优化</string>
+    <string name="generate_optimizing">优化中…</string>
+    <string name="generate_button">开始生成</string>
+    <string name="generate_no_group_title">未选择分组</string>
+    <string name="generate_no_group_body">返回并选择一个分组来生成。</string>
+    <string name="generate_back_to_groups">返回分组</string>
+    <string name="generate_selected_cd">已选中</string>
+    <string name="generate_intensity_value">%1$d%%</string>
+
+    <!-- Editable aspect chips -->
+    <string name="aspect_hair">发型</string>
+    <string name="aspect_expression">表情</string>
+    <string name="aspect_pose">姿态</string>
+    <string name="aspect_position">位置</string>
+
+    <!-- Style presets -->
+    <string name="style_realistic">写实</string>
+    <string name="style_beautify">美颜</string>
+    <string name="style_cinematic">电影感</string>
+    <string name="style_fresh">清新</string>
+    <string name="style_artistic">艺术</string>
+
+    <!-- Queue -->
+    <string name="queue_title">队列</string>
+    <string name="queue_clear_finished">清除已完成</string>
+    <string name="queue_empty_title">暂无任务</string>
+    <string name="queue_empty_body">你排队生成的图像会带着实时状态显示在这里。</string>
+    <string name="queue_untitled">未命名</string>
+    <string name="queue_status_queued">排队中</string>
+    <string name="queue_status_running">进行中</string>
+    <string name="queue_status_done">已完成</string>
+    <string name="queue_status_failed">失败</string>
+    <string name="queue_status_cancelled">已取消</string>
+
+    <!-- Result -->
+    <string name="result_title">结果</string>
+    <string name="result_pending_title">正在生成你的完美画面…</string>
+    <string name="result_pending_body">通常只需稍等片刻。</string>
+    <string name="result_image_cd">生成的图像</string>
+    <string name="result_share">分享</string>
+    <string name="result_regenerate">重新生成</string>
+    <string name="result_saved">已保存到相册。</string>
+    <string name="result_cancelled_title">生成已取消</string>
+    <string name="result_failed_title">生成失败</string>
+    <string name="result_error_generic">出了点问题，请重试。</string>
+    <string name="result_share_chooser">分享图像</string>
+
+    <!-- Templates -->
+    <string name="templates_title">模板</string>
+    <string name="templates_new">新建模板</string>
+    <string name="templates_empty_title">还没有模板</string>
+    <string name="templates_empty_body">点击“新建模板”，创建你的第一个可复用提示词。</string>
+    <string name="templates_builtin">内置</string>
+    <string name="templates_readonly">只读</string>
+    <string name="templates_builtin_title">内置模板</string>
+    <string name="templates_new_title">新建模板</string>
+    <string name="templates_edit_title">编辑模板</string>
+    <string name="templates_field_name">名称</string>
+    <string name="templates_field_prompt">提示词</string>
+    <string name="templates_field_tags">标签</string>
+    <string name="templates_tags_helper">用逗号分隔，例如：人像, 影棚</string>
+    <string name="templates_duplicate">复制后编辑</string>
+    <string name="templates_delete">删除</string>
+    <string name="templates_save">保存</string>
+    <string name="templates_copy_suffix">%1$s（副本）</string>
+
+    <!-- Usage -->
+    <string name="usage_title">用量</string>
+    <string name="usage_empty_title">暂无用量</string>
+    <string name="usage_empty_body">分组、提示词优化和图像生成的调用都会在这里统计。</string>
+    <string name="usage_total_calls">调用总数</string>
+    <string name="usage_est_cost">预计花费</string>
+    <string name="usage_images">图片</string>
+    <string name="usage_tokens">Tokens</string>
+    <string name="usage_by_operation">按操作</string>
+    <string name="usage_by_provider">按模型</string>
+    <string name="usage_recent">最近调用</string>
+    <string name="usage_op_grouping">分组</string>
+    <string name="usage_op_prompt">提示词优化</string>
+    <string name="usage_op_image">图像生成</string>
+
+    <!-- Settings -->
+    <string name="settings_title">设置</string>
+    <string name="settings_status_ready_title">一切就绪</string>
+    <string name="settings_status_ready_body">API 地址和密钥已配置完成。</string>
+    <string name="settings_status_setup_title">需要先配置</string>
+    <string name="settings_status_setup_body">在下方填写 API 地址和密钥即可开始生成。</string>
+
+    <string name="settings_section_api">接口</string>
+    <string name="settings_api_host_label">API 地址</string>
+    <string name="settings_api_host_helper">兼容 OpenAI，例如 https://api.openai.com/v1</string>
+    <string name="settings_api_key_label">API 密钥</string>
+    <string name="settings_api_key_helper">仅保存在本机</string>
+    <string name="settings_show_key">显示密钥</string>
+    <string name="settings_hide_key">隐藏密钥</string>
+    <string name="settings_model_vlm_label">视觉模型（VLM）</string>
+    <string name="settings_model_vlm_helper">理解并对你的照片进行分组</string>
+    <string name="settings_model_llm_label">文本模型（LLM）</string>
+    <string name="settings_model_llm_helper">优化你的文本提示词</string>
+    <string name="settings_model_image_label">图像模型</string>
+    <string name="settings_model_image_helper">生成最终图像</string>
+
+    <string name="settings_section_generation">生成默认值</string>
+    <string name="settings_default_style">默认风格</string>
+    <string name="settings_default_intensity">默认强度</string>
+
+    <string name="settings_section_queue">队列</string>
+    <string name="settings_max_concurrent">最大并发任务数</string>
+    <string name="settings_min_interval">最小请求间隔</string>
+    <string name="settings_interval_off">关闭</string>
+    <string name="settings_interval_ms">%1$d 毫秒</string>
+    <string name="settings_interval_seconds">%1$.1f 秒</string>
+    <string name="settings_auto_retry">失败自动重试</string>
+    <string name="settings_max_retries">最大重试次数</string>
+    <string name="settings_require_wifi">仅在 Wi-Fi 下运行</string>
+    <string name="settings_require_wifi_desc">仅在连接 Wi-Fi 时执行任务。</string>
+
+    <string name="settings_section_background">后台</string>
+    <string name="settings_run_in_background">保持后台运行</string>
+    <string name="settings_run_in_background_desc">即使应用退到后台也继续生成。</string>
+    <string name="settings_progress_notifications">进度通知</string>
+    <string name="settings_progress_notifications_desc">在通知栏显示生成进度。</string>
+
+    <string name="settings_section_prompt">提示词</string>
+    <string name="settings_auto_optimize">自动优化提示词</string>
+    <string name="settings_auto_optimize_desc">在生成图像前，让文本模型先优化每条提示词。</string>
+
+    <string name="settings_section_language">语言</string>
+    <string name="settings_language_system">跟随系统</string>
+    <string name="settings_language_zh">简体中文</string>
+    <string name="settings_language_en">English</string>
+</resources>

@@ -9,9 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.shotyou.app.domain.model.AiProviderType
 import com.shotyou.app.domain.model.AiSettings
-import com.shotyou.app.domain.model.DefaultModels
 import com.shotyou.app.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -28,20 +26,22 @@ class SettingsRepositoryImpl @Inject constructor(
 ) : SettingsRepository {
 
     private object Keys {
-        val VLM_PROVIDER = stringPreferencesKey("vlm_provider")
-        val LLM_PROVIDER = stringPreferencesKey("llm_provider")
-        val IMAGE_PROVIDER = stringPreferencesKey("image_provider")
+        val API_BASE_URL = stringPreferencesKey("api_base_url")
+        val API_KEY = stringPreferencesKey("api_key")
         val VLM_MODEL = stringPreferencesKey("vlm_model")
         val LLM_MODEL = stringPreferencesKey("llm_model")
         val IMAGE_MODEL = stringPreferencesKey("image_model")
-        val GEMINI_KEY = stringPreferencesKey("gemini_key")
-        val OPENAI_KEY = stringPreferencesKey("openai_key")
         val MAX_CONCURRENT = intPreferencesKey("max_concurrent")
         val MIN_INTERVAL = longPreferencesKey("min_interval_ms")
         val AUTO_RETRY = booleanPreferencesKey("auto_retry")
         val MAX_RETRIES = intPreferencesKey("max_retries")
-        val AUTO_OPTIMIZE = booleanPreferencesKey("auto_optimize")
         val REQUIRE_WIFI = booleanPreferencesKey("require_wifi")
+        val RUN_IN_BACKGROUND = booleanPreferencesKey("run_in_background")
+        val PROGRESS_NOTIFICATIONS = booleanPreferencesKey("progress_notifications")
+        val AUTO_OPTIMIZE = booleanPreferencesKey("auto_optimize")
+        val DEFAULT_STYLE = stringPreferencesKey("default_style")
+        val DEFAULT_INTENSITY = intPreferencesKey("default_intensity")
+        val APP_LANGUAGE = stringPreferencesKey("app_language")
     }
 
     override val settings: Flow<AiSettings> = context.dataStore.data.map { it.toSettings() }
@@ -50,43 +50,45 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun update(transform: (AiSettings) -> AiSettings) {
         context.dataStore.edit { prefs ->
-            val updated = transform(prefs.toSettings())
-            prefs[Keys.VLM_PROVIDER] = updated.vlmProvider.name
-            prefs[Keys.LLM_PROVIDER] = updated.llmProvider.name
-            prefs[Keys.IMAGE_PROVIDER] = updated.imageProvider.name
-            prefs[Keys.VLM_MODEL] = updated.vlmModel
-            prefs[Keys.LLM_MODEL] = updated.llmModel
-            prefs[Keys.IMAGE_MODEL] = updated.imageModel
-            prefs[Keys.GEMINI_KEY] = updated.geminiKey
-            prefs[Keys.OPENAI_KEY] = updated.openAiKey
-            prefs[Keys.MAX_CONCURRENT] = updated.maxConcurrentJobs
-            prefs[Keys.MIN_INTERVAL] = updated.minRequestIntervalMs
-            prefs[Keys.AUTO_RETRY] = updated.autoRetryOnFailure
-            prefs[Keys.MAX_RETRIES] = updated.maxRetries
-            prefs[Keys.AUTO_OPTIMIZE] = updated.autoOptimizePrompt
-            prefs[Keys.REQUIRE_WIFI] = updated.requireWifi
+            val s = transform(prefs.toSettings())
+            prefs[Keys.API_BASE_URL] = s.apiBaseUrl
+            prefs[Keys.API_KEY] = s.apiKey
+            prefs[Keys.VLM_MODEL] = s.vlmModel
+            prefs[Keys.LLM_MODEL] = s.llmModel
+            prefs[Keys.IMAGE_MODEL] = s.imageModel
+            prefs[Keys.MAX_CONCURRENT] = s.maxConcurrentJobs
+            prefs[Keys.MIN_INTERVAL] = s.minRequestIntervalMs
+            prefs[Keys.AUTO_RETRY] = s.autoRetryOnFailure
+            prefs[Keys.MAX_RETRIES] = s.maxRetries
+            prefs[Keys.REQUIRE_WIFI] = s.requireWifi
+            prefs[Keys.RUN_IN_BACKGROUND] = s.runInBackground
+            prefs[Keys.PROGRESS_NOTIFICATIONS] = s.progressNotifications
+            prefs[Keys.AUTO_OPTIMIZE] = s.autoOptimizePrompt
+            prefs[Keys.DEFAULT_STYLE] = s.defaultStyle
+            prefs[Keys.DEFAULT_INTENSITY] = s.defaultIntensity
+            prefs[Keys.APP_LANGUAGE] = s.appLanguage
         }
     }
 
     private fun Preferences.toSettings(): AiSettings {
-        val defaults = AiSettings()
-        fun provider(key: Preferences.Key<String>, fallback: AiProviderType): AiProviderType =
-            this[key]?.let { runCatching { AiProviderType.valueOf(it) }.getOrNull() } ?: fallback
+        val d = AiSettings()
         return AiSettings(
-            vlmProvider = provider(Keys.VLM_PROVIDER, defaults.vlmProvider),
-            llmProvider = provider(Keys.LLM_PROVIDER, defaults.llmProvider),
-            imageProvider = provider(Keys.IMAGE_PROVIDER, defaults.imageProvider),
-            vlmModel = this[Keys.VLM_MODEL] ?: DefaultModels.GEMINI_VLM,
-            llmModel = this[Keys.LLM_MODEL] ?: DefaultModels.GEMINI_LLM,
-            imageModel = this[Keys.IMAGE_MODEL] ?: DefaultModels.GEMINI_IMAGE,
-            geminiKey = this[Keys.GEMINI_KEY] ?: "",
-            openAiKey = this[Keys.OPENAI_KEY] ?: "",
-            maxConcurrentJobs = this[Keys.MAX_CONCURRENT] ?: defaults.maxConcurrentJobs,
-            minRequestIntervalMs = this[Keys.MIN_INTERVAL] ?: defaults.minRequestIntervalMs,
-            autoRetryOnFailure = this[Keys.AUTO_RETRY] ?: defaults.autoRetryOnFailure,
-            maxRetries = this[Keys.MAX_RETRIES] ?: defaults.maxRetries,
-            autoOptimizePrompt = this[Keys.AUTO_OPTIMIZE] ?: defaults.autoOptimizePrompt,
-            requireWifi = this[Keys.REQUIRE_WIFI] ?: defaults.requireWifi,
+            apiBaseUrl = this[Keys.API_BASE_URL] ?: d.apiBaseUrl,
+            apiKey = this[Keys.API_KEY] ?: d.apiKey,
+            vlmModel = this[Keys.VLM_MODEL] ?: d.vlmModel,
+            llmModel = this[Keys.LLM_MODEL] ?: d.llmModel,
+            imageModel = this[Keys.IMAGE_MODEL] ?: d.imageModel,
+            maxConcurrentJobs = this[Keys.MAX_CONCURRENT] ?: d.maxConcurrentJobs,
+            minRequestIntervalMs = this[Keys.MIN_INTERVAL] ?: d.minRequestIntervalMs,
+            autoRetryOnFailure = this[Keys.AUTO_RETRY] ?: d.autoRetryOnFailure,
+            maxRetries = this[Keys.MAX_RETRIES] ?: d.maxRetries,
+            requireWifi = this[Keys.REQUIRE_WIFI] ?: d.requireWifi,
+            runInBackground = this[Keys.RUN_IN_BACKGROUND] ?: d.runInBackground,
+            progressNotifications = this[Keys.PROGRESS_NOTIFICATIONS] ?: d.progressNotifications,
+            autoOptimizePrompt = this[Keys.AUTO_OPTIMIZE] ?: d.autoOptimizePrompt,
+            defaultStyle = this[Keys.DEFAULT_STYLE] ?: d.defaultStyle,
+            defaultIntensity = this[Keys.DEFAULT_INTENSITY] ?: d.defaultIntensity,
+            appLanguage = this[Keys.APP_LANGUAGE] ?: d.appLanguage,
         )
     }
 }

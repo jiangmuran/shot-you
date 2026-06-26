@@ -33,12 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.shotyou.app.R
 import com.shotyou.app.domain.model.GenerationJob
 import com.shotyou.app.domain.model.JobStatus
 
@@ -55,10 +57,13 @@ fun ResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Result") },
+                title = { Text(stringResource(R.string.result_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
             )
@@ -96,13 +101,13 @@ private fun PendingState(modifier: Modifier = Modifier) {
     ) {
         CircularProgressIndicator()
         Text(
-            text = "Generating your perfect shot…",
+            text = stringResource(R.string.result_pending_title),
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 24.dp),
         )
         Text(
-            text = "This usually takes a few moments.",
+            text = stringResource(R.string.result_pending_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -115,12 +120,13 @@ private fun PendingState(modifier: Modifier = Modifier) {
 private fun SuccessState(job: GenerationJob, onRegenerate: () -> Unit) {
     val context = LocalContext.current
     val resultUri = job.resultUri
+    val shareChooserTitle = stringResource(R.string.result_share_chooser)
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (resultUri != null) {
             AsyncImage(
                 model = resultUri,
-                contentDescription = "Generated image",
+                contentDescription = stringResource(R.string.result_image_cd),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -140,24 +146,24 @@ private fun SuccessState(job: GenerationJob, onRegenerate: () -> Unit) {
                 ) {
                     OutlinedButton(
                         onClick = {
-                            if (resultUri != null) shareImage(context, resultUri)
+                            if (resultUri != null) shareImage(context, resultUri, shareChooserTitle)
                         },
                         enabled = resultUri != null,
                         modifier = Modifier.weight(1f),
                     ) {
                         Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text("Share", modifier = Modifier.padding(start = 8.dp))
+                        Text(stringResource(R.string.result_share), modifier = Modifier.padding(start = 8.dp))
                     }
                     Button(
                         onClick = onRegenerate,
                         modifier = Modifier.weight(1f),
                     ) {
                         Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text("Regenerate", modifier = Modifier.padding(start = 8.dp))
+                        Text(stringResource(R.string.result_regenerate), modifier = Modifier.padding(start = 8.dp))
                     }
                 }
                 Text(
-                    text = "Saved to your gallery.",
+                    text = stringResource(R.string.result_saved),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -188,12 +194,14 @@ private fun ErrorState(
             modifier = Modifier.size(48.dp),
         )
         Text(
-            text = if (cancelled) "Generation cancelled" else "Generation failed",
+            text = stringResource(
+                if (cancelled) R.string.result_cancelled_title else R.string.result_failed_title,
+            ),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 16.dp),
         )
         Text(
-            text = message ?: "Something went wrong. Please try again.",
+            text = message ?: stringResource(R.string.result_error_generic),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -204,16 +212,16 @@ private fun ErrorState(
             modifier = Modifier.padding(top = 24.dp),
         ) {
             Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-            Text("Retry", modifier = Modifier.padding(start = 8.dp))
+            Text(stringResource(R.string.action_retry), modifier = Modifier.padding(start = 8.dp))
         }
     }
 }
 
-private fun shareImage(context: android.content.Context, uri: String) {
+private fun shareImage(context: android.content.Context, uri: String, chooserTitle: String) {
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "image/*"
         putExtra(Intent.EXTRA_STREAM, uri.toUri())
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    context.startActivity(Intent.createChooser(intent, "Share image"))
+    context.startActivity(Intent.createChooser(intent, chooserTitle))
 }

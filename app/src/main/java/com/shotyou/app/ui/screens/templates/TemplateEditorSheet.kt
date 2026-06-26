@@ -31,8 +31,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.shotyou.app.R
 import com.shotyou.app.domain.model.Template
 
 /** Parses a comma-separated tag string into a trimmed, non-blank list. */
@@ -72,24 +74,30 @@ fun TemplateEditorSheet(
         ) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Text(
-                    text = when {
-                        readOnly -> "Built-in template"
-                        template.id == 0L -> "New template"
-                        else -> "Edit template"
-                    },
+                    text = stringResource(
+                        when {
+                            readOnly -> R.string.templates_builtin_title
+                            template.id == 0L -> R.string.templates_new_title
+                            else -> R.string.templates_edit_title
+                        },
+                    ),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
                 )
                 if (readOnly) {
                     Spacer(Modifier.width(8.dp))
-                    AssistChip(onClick = {}, enabled = false, label = { Text("Read-only") })
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        label = { Text(stringResource(R.string.templates_readonly)) },
+                    )
                 }
             }
 
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.templates_field_name)) },
                 singleLine = true,
                 readOnly = readOnly,
                 modifier = Modifier.fillMaxWidth(),
@@ -97,7 +105,7 @@ fun TemplateEditorSheet(
             OutlinedTextField(
                 value = prompt,
                 onValueChange = { prompt = it },
-                label = { Text("Prompt") },
+                label = { Text(stringResource(R.string.templates_field_prompt)) },
                 readOnly = readOnly,
                 minLines = 4,
                 modifier = Modifier
@@ -107,20 +115,21 @@ fun TemplateEditorSheet(
             OutlinedTextField(
                 value = tags,
                 onValueChange = { tags = it },
-                label = { Text("Tags") },
-                supportingText = { Text("Comma-separated, e.g. portrait, studio") },
+                label = { Text(stringResource(R.string.templates_field_tags)) },
+                supportingText = { Text(stringResource(R.string.templates_tags_helper)) },
                 singleLine = true,
                 readOnly = readOnly,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             if (readOnly) {
+                val copyName = stringResource(R.string.templates_copy_suffix, template.name)
                 Button(
                     onClick = {
                         onDuplicate(
                             template.copy(
                                 id = 0L,
-                                name = "${template.name} (copy)",
+                                name = copyName,
                                 builtIn = false,
                             ),
                         )
@@ -129,7 +138,7 @@ fun TemplateEditorSheet(
                 ) {
                     Icon(Icons.Filled.ContentCopy, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Duplicate to edit")
+                    Text(stringResource(R.string.templates_duplicate))
                 }
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -140,7 +149,7 @@ fun TemplateEditorSheet(
                         ) {
                             Icon(Icons.Filled.Delete, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Delete")
+                            Text(stringResource(R.string.templates_delete))
                         }
                     }
                     Button(
@@ -156,7 +165,7 @@ fun TemplateEditorSheet(
                         enabled = name.isNotBlank() && prompt.isNotBlank(),
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("Save")
+                        Text(stringResource(R.string.templates_save))
                     }
                 }
             }

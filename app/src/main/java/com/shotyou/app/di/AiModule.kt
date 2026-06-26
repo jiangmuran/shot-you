@@ -9,8 +9,8 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Provides the AI provider factory. P2 (networking agent) swaps the bound implementation
- * to the real Gemini/OpenAI factory — the binding target is the only line that changes.
+ * Provides the AI provider factory. Bound to the OpenAI-compatible [DefaultAiProviderFactory],
+ * which targets the user-configured API host (base URL).
  */
 @Module
 @InstallIn(SingletonComponent::class)

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Generation notification channel -->
+    <string name="notif_channel_generation_name">Generation</string>
+    <string name="notif_channel_generation_desc">Background photo generation progress</string>
+
+    <!-- Ongoing progress notification -->
+    <string name="notif_generating_title">Generating your photo…</string>
+    <string name="notif_generating_text">This may take a moment.</string>
+
+    <!-- Terminal notifications -->
+    <string name="notif_success_title">Your photo is ready</string>
+    <string name="notif_success_text">Tap to view your generated photo.</string>
+    <string name="notif_failed_title">Generation failed</string>
+    <string name="notif_failed_text">Something went wrong. Please try again.</string>
+</resources>

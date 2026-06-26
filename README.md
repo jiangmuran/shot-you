@@ -1,5 +1,7 @@
 <div align="center">
 
+**English** · [简体中文](README.zh-CN.md)
+
 # 📸 Shot You
 
 ### Pick your shots — let AI keep the best one.

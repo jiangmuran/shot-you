@@ -33,11 +33,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.shotyou.app.R
 import com.shotyou.app.domain.model.AiOperation
 import com.shotyou.app.domain.model.UsageRecord
+import com.shotyou.app.ui.labelRes
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -52,13 +55,13 @@ fun UsageScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Usage") },
+                title = { Text(stringResource(R.string.usage_title)) },
                 actions = {
                     if (state.totalCalls > 0) {
                         TextButton(onClick = viewModel::clear) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.width(18.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Clear")
+                            Text(stringResource(R.string.action_clear))
                         }
                     }
                 },
@@ -78,26 +81,26 @@ fun UsageScreen(
         ) {
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    SummaryCard("Total calls", state.totalCalls.toString(), Modifier.weight(1f))
-                    SummaryCard("Est. cost", "$" + "%.4f".format(state.totalCostUsd), Modifier.weight(1f))
+                    SummaryCard(stringResource(R.string.usage_total_calls), state.totalCalls.toString(), Modifier.weight(1f))
+                    SummaryCard(stringResource(R.string.usage_est_cost), "$" + "%.4f".format(state.totalCostUsd), Modifier.weight(1f))
                 }
             }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    SummaryCard("Images", state.totalImages.toString(), Modifier.weight(1f))
-                    SummaryCard("Tokens", formatCount(state.totalTokens), Modifier.weight(1f))
+                    SummaryCard(stringResource(R.string.usage_images), state.totalImages.toString(), Modifier.weight(1f))
+                    SummaryCard(stringResource(R.string.usage_tokens), formatCount(state.totalTokens), Modifier.weight(1f))
                 }
             }
             item {
-                SectionCard("By operation") {
+                SectionCard(stringResource(R.string.usage_by_operation)) {
                     val maxOp = state.byOperation.maxOfOrNull { it.second } ?: 1
                     state.byOperation.forEach { (op, count) ->
-                        BarRow(op.label, count, maxOp, operationColor(op))
+                        BarRow(stringResource(op.labelRes()), count, maxOp, operationColor(op))
                     }
                 }
             }
             item {
-                SectionCard("By provider") {
+                SectionCard(stringResource(R.string.usage_by_provider)) {
                     val maxProv = state.byProvider.maxOfOrNull { it.second } ?: 1
                     state.byProvider.forEach { (provider, count) ->
                         BarRow(provider, count, maxProv, MaterialTheme.colorScheme.primary)
@@ -106,7 +109,7 @@ fun UsageScreen(
             }
             item {
                 Text(
-                    "Recent calls",
+                    stringResource(R.string.usage_recent),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -210,7 +213,7 @@ private fun RecentRow(record: UsageRecord) {
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    record.operation.label,
+                    stringResource(record.operation.labelRes()),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                 )
@@ -246,22 +249,15 @@ private fun EmptyUsage(padding: PaddingValues) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("No usage yet", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.usage_empty_title), style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Grouping, prompt and image-generation calls will be tallied here.",
+            stringResource(R.string.usage_empty_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
-
-private val AiOperation.label: String
-    get() = when (this) {
-        AiOperation.GROUPING -> "Grouping"
-        AiOperation.PROMPT_OPTIMIZE -> "Prompt optimize"
-        AiOperation.IMAGE_GENERATION -> "Image generation"
-    }
 
 private fun operationColor(op: AiOperation): Color = when (op) {
     AiOperation.GROUPING -> Color(0xFF6750A4)

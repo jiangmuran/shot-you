@@ -5,6 +5,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -13,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -46,6 +48,7 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
                     val destinations = backStackEntry?.destination
                     TopLevelTab.entries.forEach { tab ->
                         val selected = destinations?.hierarchy?.any { it.route == tab.route } == true
+                        val label = stringResource(tab.labelRes)
                         NavigationBarItem(
                             selected = selected,
                             onClick = {
@@ -57,13 +60,17 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
                                     restoreState = true
                                 }
                             },
-                            icon = { androidx.compose.material3.Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label) },
+                            icon = { androidx.compose.material3.Icon(tab.icon, contentDescription = label) },
+                            label = { Text(label) },
                         )
                     }
                 }
             }
         },
+        // The bottom bar handles its own bottom inset; each screen has its own
+        // Scaffold/TopAppBar that handles the status-bar (top) inset. Without this,
+        // the top inset would be applied twice, leaving a white band at the top.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { padding ->
         NavHost(
             navController = navController,
@@ -119,5 +126,7 @@ private fun ScreenContainer(
     padding: PaddingValues,
     content: @Composable () -> Unit,
 ) {
-    Box(Modifier.padding(padding)) { content() }
+    // Only reserve space for the bottom navigation bar; the screen's own Scaffold
+    // handles the top status-bar inset, so we must NOT re-apply it here.
+    Box(Modifier.padding(bottom = padding.calculateBottomPadding())) { content() }
 }

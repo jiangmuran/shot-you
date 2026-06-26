@@ -87,6 +87,11 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
+    /** Replace the whole selection set. Used by the drag-to-select gesture in the grid. */
+    fun setSelection(uris: Set<String>) {
+        _uiState.update { it.copy(selectedUris = uris) }
+    }
+
     fun clearSelection() {
         _uiState.update { it.copy(selectedUris = emptySet()) }
     }

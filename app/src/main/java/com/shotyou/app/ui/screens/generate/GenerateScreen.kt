@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -48,12 +49,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.shotyou.app.R
+import com.shotyou.app.domain.model.StylePreset
 import com.shotyou.app.domain.model.Template
+import com.shotyou.app.ui.aspectLabelRes
+import com.shotyou.app.ui.labelRes
 
 private val EDITABLE_ASPECTS = listOf("hair", "expression", "pose", "position")
 
@@ -77,10 +84,13 @@ fun GenerateScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Generate") },
+                title = { Text(stringResource(R.string.generate_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
             )
@@ -102,7 +112,10 @@ fun GenerateScreen(
                 .padding(bottom = 24.dp),
         ) {
             // 1. References
-            SectionHeader("References", "Tap to choose which shots feed the model")
+            SectionHeader(
+                stringResource(R.string.generate_references_title),
+                stringResource(R.string.generate_references_sub),
+            )
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -120,10 +133,14 @@ fun GenerateScreen(
             }
 
             // 2. Template
-            SectionHeader("Template", "Start from a saved prompt", modifier = Modifier.padding(top = 24.dp))
+            SectionHeader(
+                stringResource(R.string.generate_template_title),
+                stringResource(R.string.generate_template_sub),
+                modifier = Modifier.padding(top = 24.dp),
+            )
             if (state.templates.isEmpty()) {
                 Text(
-                    text = "No templates saved yet.",
+                    text = stringResource(R.string.generate_no_templates),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp),
@@ -141,8 +158,61 @@ fun GenerateScreen(
                 }
             }
 
-            // 3. Prompt
-            SectionHeader("Prompt", "Describe the shot you want", modifier = Modifier.padding(top = 24.dp))
+            // 3. Style
+            SectionHeader(
+                stringResource(R.string.generate_style_title),
+                stringResource(R.string.generate_style_sub),
+                modifier = Modifier.padding(top = 24.dp),
+            )
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(StylePreset.entries.toList(), key = { it.id }) { preset ->
+                    FilterChip(
+                        selected = state.style == preset,
+                        onClick = { viewModel.setStyle(preset) },
+                        label = { Text(stringResource(preset.labelRes())) },
+                    )
+                }
+            }
+
+            // 4. Intensity
+            SectionHeader(
+                stringResource(R.string.generate_intensity_title),
+                stringResource(R.string.generate_intensity_sub),
+                modifier = Modifier.padding(top = 24.dp),
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Slider(
+                    value = state.intensity.toFloat(),
+                    onValueChange = { viewModel.setIntensity(it.toInt()) },
+                    valueRange = 0f..100f,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(R.string.generate_intensity_value, state.intensity),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 12.dp),
+                )
+            }
+
+            // 5. Prompt
+            SectionHeader(
+                stringResource(R.string.generate_prompt_title),
+                stringResource(R.string.generate_prompt_sub),
+                modifier = Modifier.padding(top = 24.dp),
+            )
             OutlinedTextField(
                 value = state.prompt,
                 onValueChange = viewModel::onPromptChange,
@@ -150,7 +220,7 @@ fun GenerateScreen(
                     .fillMaxWidth()
                     .padding(top = 8.dp),
                 minLines = 4,
-                placeholder = { Text("e.g. studio portrait, soft window light, confident smile") },
+                placeholder = { Text(stringResource(R.string.generate_prompt_placeholder)) },
             )
             Row(
                 modifier = Modifier
@@ -161,7 +231,7 @@ fun GenerateScreen(
                 EDITABLE_ASPECTS.forEach { aspect ->
                     AssistChip(
                         onClick = { viewModel.appendAspect(aspect) },
-                        label = { Text(aspect) },
+                        label = { Text(stringResource(aspectLabelRes(aspect))) },
                     )
                 }
             }
@@ -177,10 +247,10 @@ fun GenerateScreen(
                         strokeWidth = 2.dp,
                         modifier = Modifier.size(18.dp),
                     )
-                    Text("Optimizing…", modifier = Modifier.padding(start = 8.dp))
+                    Text(stringResource(R.string.generate_optimizing), modifier = Modifier.padding(start = 8.dp))
                 } else {
                     Icon(Icons.Filled.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text("Optimize with AI", modifier = Modifier.padding(start = 8.dp))
+                    Text(stringResource(R.string.generate_optimize), modifier = Modifier.padding(start = 8.dp))
                 }
             }
 
@@ -200,7 +270,7 @@ fun GenerateScreen(
                         modifier = Modifier.size(20.dp),
                     )
                 } else {
-                    Text("Generate", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.generate_button), style = MaterialTheme.typography.titleMedium)
                 }
             }
         }
@@ -241,7 +311,7 @@ private fun SelectableThumbnail(uri: String, selected: Boolean, onClick: () -> U
             ) {
                 Icon(
                     imageVector = Icons.Filled.Check,
-                    contentDescription = "Selected",
+                    contentDescription = stringResource(R.string.generate_selected_cd),
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier
                         .padding(3.dp)
@@ -285,16 +355,16 @@ private fun NoGroupSelected(modifier: Modifier = Modifier, onBack: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("No group selected", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.generate_no_group_title), style = MaterialTheme.typography.titleMedium)
         Text(
-            "Go back and pick a group to generate from.",
+            stringResource(R.string.generate_no_group_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp),
         )
         TextButton(onClick = onBack, modifier = Modifier.padding(top = 8.dp)) {
-            Text("Back to Groups")
+            Text(stringResource(R.string.generate_back_to_groups))
         }
     }
 }

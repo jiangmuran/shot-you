@@ -25,10 +25,12 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.shotyou.app.R
 
 /** Section header used to group cards within the settings list. */
 @Composable
@@ -113,12 +115,14 @@ fun ApiKeyField(
         singleLine = true,
         visualTransformation = if (revealed) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        supportingText = { Text("Stored on-device only") },
+        supportingText = { Text(stringResource(R.string.settings_api_key_helper)) },
         trailingIcon = {
             IconButton(onClick = { revealed = !revealed }) {
                 Icon(
                     imageVector = if (revealed) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                    contentDescription = if (revealed) "Hide key" else "Show key",
+                    contentDescription = stringResource(
+                        if (revealed) R.string.settings_hide_key else R.string.settings_show_key,
+                    ),
                 )
             }
         },

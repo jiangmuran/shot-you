@@ -1,3 +1,189 @@
 <resources>
     <string name="app_name">Shot You</string>
+
+    <!-- Common actions -->
+    <string name="action_back">Back</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_manage">Manage</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_cancel">Cancel</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_library">Library</string>
+    <string name="nav_queue">Queue</string>
+    <string name="nav_templates">Templates</string>
+    <string name="nav_usage">Usage</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Library -->
+    <string name="library_title">Library</string>
+    <string name="library_selected_count">%1$d selected</string>
+    <string name="library_group_with_ai">Group %1$d with AI</string>
+    <string name="library_select_min_hint">Select at least 2 photos to group</string>
+    <string name="library_grouping_title">Grouping with AI…</string>
+    <string name="library_grouping_body">Finding the best shots in your selection</string>
+    <string name="library_partial_access">You\'ve granted access to selected photos</string>
+    <string name="library_permission_title">Access your photos</string>
+    <string name="library_permission_body">Shot You needs access to your gallery so you can pick photos and group the best shots with AI.</string>
+    <string name="library_grant_access">Grant access</string>
+    <string name="library_empty_title">No photos yet</string>
+    <string name="library_empty_body">Photos you take will show up here, ready to group and enhance with AI.</string>
+    <string name="library_loading">Loading your photos…</string>
+    <string name="library_selected_cd">Selected</string>
+
+    <!-- Groups -->
+    <string name="groups_title">Groups</string>
+    <string name="groups_empty_title">No groups yet</string>
+    <string name="groups_empty_body">Pick photos in Library and group them with AI to see clusters here.</string>
+    <string name="groups_reference_cd">Reference photo</string>
+    <plurals name="groups_photo_count">
+        <item quantity="one">%d photo</item>
+        <item quantity="other">%d photos</item>
+    </plurals>
+
+    <!-- Generate -->
+    <string name="generate_title">Generate</string>
+    <string name="generate_references_title">References</string>
+    <string name="generate_references_sub">Tap to choose which shots feed the model</string>
+    <string name="generate_template_title">Template</string>
+    <string name="generate_template_sub">Start from a saved prompt</string>
+    <string name="generate_no_templates">No templates saved yet.</string>
+    <string name="generate_style_title">Style</string>
+    <string name="generate_style_sub">Pick the look you\'re after</string>
+    <string name="generate_intensity_title">Intensity</string>
+    <string name="generate_intensity_sub">How strongly to apply the style</string>
+    <string name="generate_prompt_title">Prompt</string>
+    <string name="generate_prompt_sub">Describe the shot you want</string>
+    <string name="generate_prompt_placeholder">e.g. studio portrait, soft window light, confident smile</string>
+    <string name="generate_optimize">Optimize with AI</string>
+    <string name="generate_optimizing">Optimizing…</string>
+    <string name="generate_button">Generate</string>
+    <string name="generate_no_group_title">No group selected</string>
+    <string name="generate_no_group_body">Go back and pick a group to generate from.</string>
+    <string name="generate_back_to_groups">Back to Groups</string>
+    <string name="generate_selected_cd">Selected</string>
+    <string name="generate_intensity_value">%1$d%%</string>
+
+    <!-- Editable aspect chips -->
+    <string name="aspect_hair">Hair</string>
+    <string name="aspect_expression">Expression</string>
+    <string name="aspect_pose">Pose</string>
+    <string name="aspect_position">Position</string>
+
+    <!-- Style presets -->
+    <string name="style_realistic">Realistic</string>
+    <string name="style_beautify">Beautify</string>
+    <string name="style_cinematic">Cinematic</string>
+    <string name="style_fresh">Fresh</string>
+    <string name="style_artistic">Artistic</string>
+
+    <!-- Queue -->
+    <string name="queue_title">Queue</string>
+    <string name="queue_clear_finished">Clear finished</string>
+    <string name="queue_empty_title">No jobs yet</string>
+    <string name="queue_empty_body">Generated images you queue will appear here with live status.</string>
+    <string name="queue_untitled">Untitled</string>
+    <string name="queue_status_queued">Queued</string>
+    <string name="queue_status_running">Running</string>
+    <string name="queue_status_done">Done</string>
+    <string name="queue_status_failed">Failed</string>
+    <string name="queue_status_cancelled">Cancelled</string>
+
+    <!-- Result -->
+    <string name="result_title">Result</string>
+    <string name="result_pending_title">Generating your perfect shot…</string>
+    <string name="result_pending_body">This usually takes a few moments.</string>
+    <string name="result_image_cd">Generated image</string>
+    <string name="result_share">Share</string>
+    <string name="result_regenerate">Regenerate</string>
+    <string name="result_saved">Saved to your gallery.</string>
+    <string name="result_cancelled_title">Generation cancelled</string>
+    <string name="result_failed_title">Generation failed</string>
+    <string name="result_error_generic">Something went wrong. Please try again.</string>
+    <string name="result_share_chooser">Share image</string>
+
+    <!-- Templates -->
+    <string name="templates_title">Templates</string>
+    <string name="templates_new">New template</string>
+    <string name="templates_empty_title">No templates yet</string>
+    <string name="templates_empty_body">Tap \"New template\" to create your first reusable prompt.</string>
+    <string name="templates_builtin">Built-in</string>
+    <string name="templates_readonly">Read-only</string>
+    <string name="templates_builtin_title">Built-in template</string>
+    <string name="templates_new_title">New template</string>
+    <string name="templates_edit_title">Edit template</string>
+    <string name="templates_field_name">Name</string>
+    <string name="templates_field_prompt">Prompt</string>
+    <string name="templates_field_tags">Tags</string>
+    <string name="templates_tags_helper">Comma-separated, e.g. portrait, studio</string>
+    <string name="templates_duplicate">Duplicate to edit</string>
+    <string name="templates_delete">Delete</string>
+    <string name="templates_save">Save</string>
+    <string name="templates_copy_suffix">%1$s (copy)</string>
+
+    <!-- Usage -->
+    <string name="usage_title">Usage</string>
+    <string name="usage_empty_title">No usage yet</string>
+    <string name="usage_empty_body">Grouping, prompt and image-generation calls will be tallied here.</string>
+    <string name="usage_total_calls">Total calls</string>
+    <string name="usage_est_cost">Est. cost</string>
+    <string name="usage_images">Images</string>
+    <string name="usage_tokens">Tokens</string>
+    <string name="usage_by_operation">By operation</string>
+    <string name="usage_by_provider">By model</string>
+    <string name="usage_recent">Recent calls</string>
+    <string name="usage_op_grouping">Grouping</string>
+    <string name="usage_op_prompt">Prompt optimize</string>
+    <string name="usage_op_image">Image generation</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_status_ready_title">Ready to go</string>
+    <string name="settings_status_ready_body">Your API host and key are configured.</string>
+    <string name="settings_status_setup_title">Setup needed</string>
+    <string name="settings_status_setup_body">Add your API host and key below to start generating.</string>
+
+    <string name="settings_section_api">API</string>
+    <string name="settings_api_host_label">API Host</string>
+    <string name="settings_api_host_helper">OpenAI-compatible, e.g. https://api.openai.com/v1</string>
+    <string name="settings_api_key_label">API Key</string>
+    <string name="settings_api_key_helper">Stored on-device only</string>
+    <string name="settings_show_key">Show key</string>
+    <string name="settings_hide_key">Hide key</string>
+    <string name="settings_model_vlm_label">Vision model (VLM)</string>
+    <string name="settings_model_vlm_helper">Understands and groups your photos</string>
+    <string name="settings_model_llm_label">Prompt model (LLM)</string>
+    <string name="settings_model_llm_helper">Refines your text prompts</string>
+    <string name="settings_model_image_label">Image model</string>
+    <string name="settings_model_image_helper">Generates the final images</string>
+
+    <string name="settings_section_generation">Generation defaults</string>
+    <string name="settings_default_style">Default style</string>
+    <string name="settings_default_intensity">Default intensity</string>
+
+    <string name="settings_section_queue">Queue</string>
+    <string name="settings_max_concurrent">Max concurrent jobs</string>
+    <string name="settings_min_interval">Min request interval</string>
+    <string name="settings_interval_off">Off</string>
+    <string name="settings_interval_ms">%1$d ms</string>
+    <string name="settings_interval_seconds">%1$.1f s</string>
+    <string name="settings_auto_retry">Auto-retry on failure</string>
+    <string name="settings_max_retries">Max retries</string>
+    <string name="settings_require_wifi">Require Wi-Fi</string>
+    <string name="settings_require_wifi_desc">Only run jobs while connected to Wi-Fi.</string>
+
+    <string name="settings_section_background">Background</string>
+    <string name="settings_run_in_background">Keep running in background</string>
+    <string name="settings_run_in_background_desc">Continue generating even when the app is in the background.</string>
+    <string name="settings_progress_notifications">Progress notifications</string>
+    <string name="settings_progress_notifications_desc">Show generation progress in the notification shade.</string>
+
+    <string name="settings_section_prompt">Prompt</string>
+    <string name="settings_auto_optimize">Auto-optimize prompts</string>
+    <string name="settings_auto_optimize_desc">Let the prompt model refine each prompt before image generation.</string>
+
+    <string name="settings_section_language">Language</string>
+    <string name="settings_language_system">System</string>
+    <string name="settings_language_zh">简体中文</string>
+    <string name="settings_language_en">English</string>
 </resources>
