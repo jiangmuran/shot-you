@@ -35,7 +35,7 @@ data class GroupsUiState(
 }
 
 /** The user's per-group overrides, keyed by group id. */
-private data class Override(val included: Boolean? = null, val hint: String? = null)
+private data class GroupOverride(val included: Boolean? = null, val hint: String? = null)
 
 @HiltViewModel
 class GroupsViewModel @Inject constructor(
@@ -44,7 +44,7 @@ class GroupsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
-    private val overrides = MutableStateFlow<Map<String, Override>>(emptyMap())
+    private val overrides = MutableStateFlow<Map<String, GroupOverride>>(emptyMap())
     private val starting = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
 
@@ -65,11 +65,11 @@ class GroupsViewModel @Inject constructor(
         val group = sessionStore.groups.value.firstOrNull { it.id == groupId } ?: return@update map
         val current = map[groupId]
         val now = current?.included ?: group.recommended
-        map + (groupId to (current ?: Override()).copy(included = !now))
+        map + (groupId to (current ?: GroupOverride()).copy(included = !now))
     }
 
     fun onHintChange(groupId: String, value: String) = overrides.update { map ->
-        map + (groupId to (map[groupId] ?: Override()).copy(hint = value))
+        map + (groupId to (map[groupId] ?: GroupOverride()).copy(hint = value))
     }
 
     fun consumeError() { error.value = null }
