@@ -125,7 +125,7 @@ class GroupingRepositoryImpl @Inject constructor(
         return finalGroups
     }
 
-    /** Overlapping index windows covering [0, n). Each is `[first..last]` inclusive. */
+    /** Overlapping inclusive index ranges covering all n photos. */
     private fun slidingWindows(n: Int, size: Int, overlap: Int): List<IntRange> {
         if (n <= size) return listOf(0..(n - 1))
         val step = (size - overlap).coerceAtLeast(1)

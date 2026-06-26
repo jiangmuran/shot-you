@@ -29,12 +29,26 @@ object PromptComposer {
             if (!suggestion.isNullOrBlank()) {
                 append("\n\nRequested adjustments from the user: ${suggestion.trim()}.")
             }
+            append("\n\n").append(REALISM_GUIDANCE)
             append(
-                "\n\nYou may adjust ${editableAspects.joinToString(", ")} as needed, " +
-                    "but preserve each person's true identity and likeness. Output a single polished photo.",
+                "\n\nYou may adjust ${editableAspects.joinToString(", ")}, lighting and background " +
+                    "composition to make the shot more flattering, but preserve each person's true " +
+                    "identity and likeness. If several reference photos are provided you may combine " +
+                    "them — e.g. place the subject from one photo into the nicer setting/background of " +
+                    "another — blending them seamlessly with consistent lighting, perspective, scale and " +
+                    "shadows. Output a single photo.",
             )
         }
     }
+
+    /** Shared instruction that pushes for "beautiful but believable" — not the plastic AI look. */
+    const val REALISM_GUIDANCE: String =
+        "The result must look like a genuine candid photograph taken on a real camera: natural skin " +
+            "texture with subtle pores and imperfections, realistic and physically-plausible lighting, " +
+            "soft natural shadows, believable depth of field, and a tasteful real-world composition. " +
+            "Make it attractive, but never at the cost of realism — avoid the tell-tale over-smoothed, " +
+            "over-sharpened, waxy, over-saturated 'AI look'. A viewer should not be able to tell it was " +
+            "AI-generated. Find the right balance between flattering and authentic."
 
     /** Distinct "flavors" used to vary candidates within a batch (label → extra directive). */
     private val flavors: List<Pair<String, String>> = listOf(
