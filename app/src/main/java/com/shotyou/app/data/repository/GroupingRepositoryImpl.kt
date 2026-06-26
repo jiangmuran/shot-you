@@ -10,6 +10,13 @@ import com.shotyou.app.domain.repository.PhotoRepository
 import com.shotyou.app.domain.repository.SettingsRepository
 import com.shotyou.app.domain.repository.UsageRepository
 import com.shotyou.app.util.Clock
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -61,17 +68,28 @@ class GroupingRepositoryImpl @Inject constructor(
         }
         fun union(a: String, b: String) { parent[find(a)] = find(b) }
 
+        // Process windows CONCURRENTLY (bounded) with per-window retry so large selections
+        // don't block for a long time on sequential calls and survive a flaky request.
+        val windows = slidingWindows(distinctUris.size, windowSize, overlap)
+        val gate = Semaphore(MAX_CONCURRENT_WINDOWS)
+        val windowResults = coroutineScope {
+            windows.map { window ->
+                async {
+                    gate.withPermit {
+                        val windowUris = distinctUris.subList(window.first, window.last + 1)
+                        val images = windowUris.map { photoRepository.loadAiImage(it) }
+                        withRetry(times = 2) { provider.groupSimilar(images, effectiveInstruction) }
+                    }
+                }
+            }.awaitAll()
+        }
+
         val contributing = mutableListOf<VlmGroup>()
         var promptTokens = 0
         var completionTokens = 0
-
-        for (window in slidingWindows(distinctUris.size, windowSize, overlap)) {
-            val windowUris = distinctUris.subList(window.first, window.last + 1)
-            val images = windowUris.map { photoRepository.loadAiImage(it) }
-            val result = provider.groupSimilar(images, effectiveInstruction)
+        windowResults.forEach { result ->
             promptTokens += result.usage.promptTokens
             completionTokens += result.usage.completionTokens
-
             result.groups.forEach { g ->
                 val members = g.memberIds.filter { parent.containsKey(it) }
                 if (members.isNotEmpty()) {
@@ -147,6 +165,26 @@ class GroupingRepositoryImpl @Inject constructor(
             start += step
         }
         return ranges
+    }
+
+    /** Retry a suspend block a few times on failure (not on cancellation). */
+    private suspend fun <T> withRetry(times: Int, block: suspend () -> T): T {
+        var last: Throwable? = null
+        repeat(times + 1) { attempt ->
+            try {
+                return block()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                last = e
+                if (attempt < times) delay(700L * (attempt + 1))
+            }
+        }
+        throw last ?: IllegalStateException("retry failed")
+    }
+
+    private companion object {
+        const val MAX_CONCURRENT_WINDOWS = 4
     }
 
     /** Short usage label derived from the configured API host, e.g. "api.openai.com". */

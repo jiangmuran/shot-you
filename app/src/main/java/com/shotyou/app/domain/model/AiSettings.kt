@@ -60,7 +60,7 @@ data class AiSettings(
 
     // Classification (VLM) — sliding window so we never exceed the model's image limit and
     // never split a group across two requests (windows overlap).
-    val vlmBatchSize: Int = 20,
+    val vlmBatchSize: Int = 8,
     val candidatesPerItem: Int = 3,
 
     // Background queue behaviour
@@ -70,8 +70,9 @@ data class AiSettings(
     val maxRetries: Int = 2,
     val requireWifi: Boolean = false,
 
-    // Background persistence & notifications
-    val runInBackground: Boolean = false,
+    // Background persistence & notifications (keep-alive on by default: generation runs as a
+    // foreground service so it survives backgrounding, with a status-bar progress notification)
+    val runInBackground: Boolean = true,
     val progressNotifications: Boolean = true,
 
     // Queue control (persisted so a paused queue stays paused across restarts)
