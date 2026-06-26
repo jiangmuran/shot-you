@@ -19,6 +19,11 @@ data class PhotoGroup(
     val reason: String,
     val photoUris: List<String>,
     val referenceUris: List<String>,
+    /** Coarse category from the VLM (e.g. people / scenery / food / other). */
+    val category: String? = null,
+    /** VLM suggestion: whether this group is worth generating (false = too similar to
+     *  another group / low value — pre-unchecked in the curation screen to save cost). */
+    val recommended: Boolean = true,
 ) {
     val size: Int get() = photoUris.size
 }

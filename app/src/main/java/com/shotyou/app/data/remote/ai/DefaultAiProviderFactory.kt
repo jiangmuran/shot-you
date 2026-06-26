@@ -59,19 +59,26 @@ class DefaultAiProviderFactory @Inject constructor(
 
         val normalised = normaliseBaseUrl(baseUrl)
         val service = services.getOrPut(normalised) {
-            Retrofit.Builder()
-                .baseUrl(normalised)
-                .client(okHttpClient)
-                .addConverterFactory(converterFactory)
-                .build()
-                .create(OpenAiService::class.java)
+            val retrofit = runCatching {
+                Retrofit.Builder()
+                    .baseUrl(normalised)
+                    .client(okHttpClient)
+                    .addConverterFactory(converterFactory)
+                    .build()
+            }.getOrElse {
+                throw AiException("Invalid API host: \"$baseUrl\". Use a full URL like https://api.openai.com/v1", it)
+            }
+            retrofit.create(OpenAiService::class.java)
         }
         return service to key
     }
 
-    /** Retrofit requires the base url to end with a slash for relative endpoints to resolve. */
+    /** Retrofit requires a scheme and a trailing slash for relative endpoints to resolve. */
     private fun normaliseBaseUrl(raw: String): String {
-        val trimmed = raw.trim()
+        var trimmed = raw.trim()
+        if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+            trimmed = "https://$trimmed" // tolerate hosts pasted without a scheme
+        }
         return if (trimmed.endsWith("/")) trimmed else "$trimmed/"
     }
 }

@@ -5,7 +5,7 @@ object DefaultModels {
     const val API_BASE_URL = "https://api.openai.com/v1"
     const val VLM = "gpt-4o"
     const val LLM = "gpt-4o-mini"
-    const val IMAGE = "gpt-image-1"
+    const val IMAGE = "gpt-image-2"
 }
 
 /**
@@ -50,6 +50,11 @@ data class AiSettings(
     val vlmModel: String = DefaultModels.VLM,
     val llmModel: String = DefaultModels.LLM,
     val imageModel: String = DefaultModels.IMAGE,
+
+    // Classification (VLM) — sliding window so we never exceed the model's image limit and
+    // never split a group across two requests (windows overlap).
+    val vlmBatchSize: Int = 20,
+    val candidatesPerItem: Int = 3,
 
     // Background queue behaviour
     val maxConcurrentJobs: Int = 1,

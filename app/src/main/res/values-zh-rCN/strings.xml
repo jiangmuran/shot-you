@@ -200,8 +200,8 @@
 
     <string name="settings_section_pricing">价格</string>
     <string name="settings_price_per_image">每张图片价格</string>
-    <string name="settings_price_per_1k_input">每 1K 输入 Token 价格</string>
-    <string name="settings_price_per_1k_output">每 1K 输出 Token 价格</string>
+    <string name="settings_price_per_1k_input">每 100 万输入 Token 价格</string>
+    <string name="settings_price_per_1k_output">每 100 万输出 Token 价格</string>
     <string name="settings_currency_symbol">货币符号</string>
     <string name="settings_pricing_helper">用于在用量面板估算花费。</string>
 

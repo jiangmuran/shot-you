@@ -4,6 +4,7 @@ import android.util.Base64
 import com.shotyou.app.domain.ai.AiException
 import com.shotyou.app.domain.ai.AiImage
 import com.shotyou.app.domain.ai.VlmGroup
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import retrofit2.HttpException
@@ -24,6 +25,8 @@ internal fun String.decodeBase64(): ByteArray {
 internal suspend fun <T> aiCall(provider: String, block: suspend () -> T): T =
     try {
         block()
+    } catch (e: CancellationException) {
+        throw e // never swallow coroutine cancellation
     } catch (e: AiException) {
         throw e
     } catch (e: HttpException) {
@@ -44,11 +47,13 @@ internal object GroupingContract {
         appendLine("Cluster together photos that are visually similar or near-duplicates: the same scene or people, burst shots, or only minor differences in pose, expression or framing.")
         appendLine("Every photo index must appear in exactly one group. A photo with no similar match forms its own single-member group.")
         appendLine("For each group, nominate 1-2 best reference frames (sharpest, eyes open, best composition).")
+        appendLine("Also classify each group with a category: one of \"people\", \"scenery\", \"food\", \"animal\", \"object\", or \"other\".")
+        appendLine("Set \"recommended\" to false for groups that are NOT worth generating a new image for — e.g. a group that is essentially redundant with another group, or low-value content. Set it to true otherwise. Image generation is expensive, so be selective.")
         userInstruction?.takeIf { it.isNotBlank() }?.let {
             appendLine("Additional user guidance: $it")
         }
         appendLine("Respond with STRICT JSON only — no markdown, no code fences, no commentary — exactly in this shape:")
-        appendLine("""{"groups":[{"members":[0,2],"references":[0],"title":"short title","reason":"why these belong together"}]}""")
+        appendLine("""{"groups":[{"members":[0,2],"references":[0],"title":"short title","reason":"why these belong together","category":"people","recommended":true}]}""")
         append("members and references are 0-based indices into the provided photos.")
     }
 
@@ -69,6 +74,8 @@ internal object GroupingContract {
                 referenceIds = referenceIds,
                 title = g.title.ifBlank { "Group" },
                 reason = g.reason,
+                category = g.category?.lowercase()?.takeIf { it.isNotBlank() },
+                recommended = g.recommended,
             )
         }
     }
@@ -97,6 +104,8 @@ internal data class GroupJson(
     val references: List<Int> = emptyList(),
     val title: String = "",
     val reason: String = "",
+    val category: String? = null,
+    val recommended: Boolean = true,
 )
 
 /** Shared system-style instruction for prompt optimisation. */

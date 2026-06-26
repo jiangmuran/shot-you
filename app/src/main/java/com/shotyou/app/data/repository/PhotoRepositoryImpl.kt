@@ -235,16 +235,31 @@ class PhotoRepositoryImpl @Inject constructor(
     override suspend fun deletePhotos(uris: List<String>): DeleteOutcome = withContext(Dispatchers.IO) {
         val parsed = uris.mapNotNull { runCatching { Uri.parse(it) }.getOrNull() }
         if (parsed.isEmpty()) return@withContext DeleteOutcome.Deleted(0)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+ requires user consent to delete media the app doesn't own.
-            val pendingIntent = MediaStore.createDeleteRequest(resolver, parsed)
-            DeleteOutcome.NeedsConsent(pendingIntent.intentSender)
-        } else {
-            var count = 0
-            parsed.forEach { uri ->
-                count += runCatching { resolver.delete(uri, null, null) }.getOrDefault(0)
+        when {
+            // Android 11+ : one system consent dialog covers all items.
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ->
+                DeleteOutcome.NeedsConsent(MediaStore.createDeleteRequest(resolver, parsed).intentSender)
+            // Android 10 : deleting media the app doesn't own throws RecoverableSecurityException,
+            // whose IntentSender we must launch for consent (rather than silently failing).
+            Build.VERSION.SDK_INT == Build.VERSION_CODES.Q -> {
+                var count = 0
+                for (uri in parsed) {
+                    try {
+                        count += resolver.delete(uri, null, null)
+                    } catch (e: android.app.RecoverableSecurityException) {
+                        return@withContext DeleteOutcome.NeedsConsent(e.userAction.actionIntent.intentSender)
+                    } catch (_: Exception) {
+                        // skip un-deletable item
+                    }
+                }
+                DeleteOutcome.Deleted(count)
             }
-            DeleteOutcome.Deleted(count)
+            // Android 9 and below : direct delete (WRITE_EXTERNAL_STORAGE granted).
+            else -> {
+                var count = 0
+                parsed.forEach { uri -> count += runCatching { resolver.delete(uri, null, null) }.getOrDefault(0) }
+                DeleteOutcome.Deleted(count)
+            }
         }
     }
 }

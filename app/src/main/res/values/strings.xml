@@ -201,8 +201,8 @@
 
     <string name="settings_section_pricing">Pricing</string>
     <string name="settings_price_per_image">Price per image</string>
-    <string name="settings_price_per_1k_input">Price per 1K input tokens</string>
-    <string name="settings_price_per_1k_output">Price per 1K output tokens</string>
+    <string name="settings_price_per_1k_input">Price per 1M input tokens</string>
+    <string name="settings_price_per_1k_output">Price per 1M output tokens</string>
     <string name="settings_currency_symbol">Currency symbol</string>
     <string name="settings_pricing_helper">Used to estimate cost on the Usage dashboard.</string>
 

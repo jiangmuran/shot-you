@@ -32,6 +32,8 @@ class SettingsRepositoryImpl @Inject constructor(
         val VLM_MODEL = stringPreferencesKey("vlm_model")
         val LLM_MODEL = stringPreferencesKey("llm_model")
         val IMAGE_MODEL = stringPreferencesKey("image_model")
+        val VLM_BATCH_SIZE = intPreferencesKey("vlm_batch_size")
+        val CANDIDATES_PER_ITEM = intPreferencesKey("candidates_per_item")
         val MAX_CONCURRENT = intPreferencesKey("max_concurrent")
         val MIN_INTERVAL = longPreferencesKey("min_interval_ms")
         val AUTO_RETRY = booleanPreferencesKey("auto_retry")
@@ -61,6 +63,8 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs[Keys.VLM_MODEL] = s.vlmModel
             prefs[Keys.LLM_MODEL] = s.llmModel
             prefs[Keys.IMAGE_MODEL] = s.imageModel
+            prefs[Keys.VLM_BATCH_SIZE] = s.vlmBatchSize
+            prefs[Keys.CANDIDATES_PER_ITEM] = s.candidatesPerItem
             prefs[Keys.MAX_CONCURRENT] = s.maxConcurrentJobs
             prefs[Keys.MIN_INTERVAL] = s.minRequestIntervalMs
             prefs[Keys.AUTO_RETRY] = s.autoRetryOnFailure
@@ -87,6 +91,8 @@ class SettingsRepositoryImpl @Inject constructor(
             vlmModel = this[Keys.VLM_MODEL] ?: d.vlmModel,
             llmModel = this[Keys.LLM_MODEL] ?: d.llmModel,
             imageModel = this[Keys.IMAGE_MODEL] ?: d.imageModel,
+            vlmBatchSize = this[Keys.VLM_BATCH_SIZE] ?: d.vlmBatchSize,
+            candidatesPerItem = this[Keys.CANDIDATES_PER_ITEM] ?: d.candidatesPerItem,
             maxConcurrentJobs = this[Keys.MAX_CONCURRENT] ?: d.maxConcurrentJobs,
             minRequestIntervalMs = this[Keys.MIN_INTERVAL] ?: d.minRequestIntervalMs,
             autoRetryOnFailure = this[Keys.AUTO_RETRY] ?: d.autoRetryOnFailure,

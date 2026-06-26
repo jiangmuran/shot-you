@@ -147,6 +147,13 @@ internal class OpenAiImageGenProvider(
         response.error?.let { throw AiException("$PROVIDER API error: ${it.message}") }
         val images = response.data.mapNotNull { d -> d.b64Json?.let { GeneratedImage(bytes = it.decodeBase64(), mimeType = "image/png") } }
         if (images.isEmpty()) throw AiException("$PROVIDER returned no image data")
-        ImageGenResult(images = images, usage = TokenUsage(imageCount = images.size))
+        ImageGenResult(
+            images = images,
+            usage = TokenUsage(
+                promptTokens = response.usage?.inputTokens ?: 0,
+                completionTokens = response.usage?.outputTokens ?: 0,
+                imageCount = images.size,
+            ),
+        )
     }
 }

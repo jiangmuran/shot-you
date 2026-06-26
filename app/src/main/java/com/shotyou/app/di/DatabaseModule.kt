@@ -2,6 +2,8 @@ package com.shotyou.app.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.shotyou.app.data.local.GenerationJobDao
 import com.shotyou.app.data.local.ShotYouDatabase
 import com.shotyou.app.data.local.TemplateDao
@@ -17,11 +19,20 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    private val MIGRATION_1_2 = object : Migration(1, 2) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE generation_jobs ADD COLUMN batchId TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE generation_jobs ADD COLUMN variantIndex INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE generation_jobs ADD COLUMN variantLabel TEXT")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): ShotYouDatabase =
         Room.databaseBuilder(context, ShotYouDatabase::class.java, ShotYouDatabase.NAME)
-            .fallbackToDestructiveMigration()
+            .addMigrations(MIGRATION_1_2)
+            .fallbackToDestructiveMigration() // safety net for any other version jump
             .build()
 
     @Provides

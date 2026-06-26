@@ -68,13 +68,14 @@ class GenerationNotifications(private val context: Context) {
     /** Post (or update) the ongoing progress notification. */
     fun notifyProgress() = post(NOTIF_ID, buildProgress())
 
-    /** Replace the notification with a success message. */
+    /** Post a success message under a SEPARATE id so it survives the foreground-service
+     *  teardown (which cancels [NOTIF_ID]). */
     fun notifySuccess() =
-        post(NOTIF_ID, buildTerminal(R.string.notif_success_title, R.string.notif_success_text))
+        post(TERMINAL_ID, buildTerminal(R.string.notif_success_title, R.string.notif_success_text))
 
-    /** Replace the notification with a failure message. */
+    /** Post a failure message under the separate terminal id. */
     fun notifyFailure() =
-        post(NOTIF_ID, buildTerminal(R.string.notif_failed_title, R.string.notif_failed_text))
+        post(TERMINAL_ID, buildTerminal(R.string.notif_failed_title, R.string.notif_failed_text))
 
     private fun post(id: Int, notification: Notification) {
         // Guard a missing POST_NOTIFICATIONS permission (Android 13+) — just no-op.
@@ -85,10 +86,13 @@ class GenerationNotifications(private val context: Context) {
         }
     }
 
-    private fun appIcon(): Int = context.applicationInfo.icon
+    // A dedicated monochrome status-bar icon (a launcher/mipmap icon renders as a blank
+    // square and can trigger "Bad notification for startForeground" on some OEMs).
+    private fun appIcon(): Int = R.drawable.ic_stat_shotyou
 
     companion object {
         const val CHANNEL_ID = "shotyou_generation"
         const val NOTIF_ID = 4201
+        const val TERMINAL_ID = 4202
     }
 }

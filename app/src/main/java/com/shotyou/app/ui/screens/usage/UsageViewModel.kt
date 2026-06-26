@@ -92,8 +92,10 @@ class UsageViewModel @Inject constructor(
         )
     }
 
+    // Token prices are configured per 1,000,000 tokens (the fields are named *1k* for
+    // historical reasons but are interpreted per-million).
     private fun costOf(r: UsageRecord, s: AiSettings): Double =
         r.imageCount * s.pricePerImage +
-            r.promptTokens / 1000.0 * s.pricePer1kInputTokens +
-            r.completionTokens / 1000.0 * s.pricePer1kOutputTokens
+            r.promptTokens / 1_000_000.0 * s.pricePer1kInputTokens +
+            r.completionTokens / 1_000_000.0 * s.pricePer1kOutputTokens
 }

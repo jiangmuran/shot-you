@@ -28,6 +28,8 @@ data class VlmGroup(
     val referenceIds: List<String>,
     val title: String,
     val reason: String,
+    val category: String? = null,
+    val recommended: Boolean = true,
 )
 
 data class GroupingResult(

@@ -1,6 +1,7 @@
 package com.shotyou.app.data.repository
 
 import com.shotyou.app.domain.ai.AiProviderFactory
+import com.shotyou.app.domain.ai.VlmGroup
 import com.shotyou.app.domain.model.AiOperation
 import com.shotyou.app.domain.model.PhotoGroup
 import com.shotyou.app.domain.model.UsageRecord
@@ -14,8 +15,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Runs VLM grouping over selected photos: decodes each uri to bytes, asks the configured VLM
- * to cluster near-duplicates, maps the result back to [PhotoGroup]s, and records usage.
+ * Classifies selected photos with the VLM. Large selections are processed with a
+ * **sliding window** (size = `settings.vlmBatchSize`) so we never exceed the model's
+ * per-request image limit. Consecutive windows **overlap**, and clusters that share any
+ * photo across windows are merged (union-find) — so a group is never split across two
+ * requests. Each group carries a category and a "recommended" flag from the VLM.
  */
 @Singleton
 class GroupingRepositoryImpl @Inject constructor(
@@ -27,35 +31,81 @@ class GroupingRepositoryImpl @Inject constructor(
 ) : GroupingRepository {
 
     override suspend fun groupPhotos(uris: List<String>, instruction: String?): List<PhotoGroup> {
-        if (uris.isEmpty()) return emptyList()
+        val distinctUris = uris.distinct()
+        if (distinctUris.isEmpty()) return emptyList()
 
         val settings = settingsRepository.current()
         val provider = providerFactory.vlm(settings)
         val providerLabel = hostLabel(settings.apiBaseUrl)
 
-        val images = uris.map { photoRepository.loadAiImage(it) }
-        val result = provider.groupSimilar(images, instruction)
+        val windowSize = settings.vlmBatchSize.coerceAtLeast(2)
+        val overlap = (windowSize / 4).coerceIn(1, windowSize - 1)
 
-        val groups = result.groups.mapIndexed { index, g ->
-            val photoUris = g.memberIds
-            val referenceUris = g.referenceIds.ifEmpty { photoUris.take(1) }
+        // Union-find over uris.
+        val parent = HashMap<String, String>().apply { distinctUris.forEach { put(it, it) } }
+        fun find(x: String): String {
+            var r = x
+            while (parent[r] != r) r = parent[r]!!
+            var c = x
+            while (parent[c] != c) { val n = parent[c]!!; parent[c] = r; c = n }
+            return r
+        }
+        fun union(a: String, b: String) { parent[find(a)] = find(b) }
+
+        val contributing = mutableListOf<VlmGroup>()
+        var promptTokens = 0
+        var completionTokens = 0
+
+        for (window in slidingWindows(distinctUris.size, windowSize, overlap)) {
+            val windowUris = distinctUris.subList(window.first, window.last + 1)
+            val images = windowUris.map { photoRepository.loadAiImage(it) }
+            val result = provider.groupSimilar(images, instruction)
+            promptTokens += result.usage.promptTokens
+            completionTokens += result.usage.completionTokens
+
+            result.groups.forEach { g ->
+                val members = g.memberIds.filter { parent.containsKey(it) }
+                if (members.isNotEmpty()) {
+                    contributing += g.copy(memberIds = members)
+                    members.drop(1).forEach { union(members.first(), it) }
+                }
+            }
+        }
+
+        // Assemble final groups by union-find root, preserving original photo order.
+        val rootToUris = LinkedHashMap<String, MutableList<String>>()
+        distinctUris.forEach { rootToUris.getOrPut(find(it)) { mutableListOf() }.add(it) }
+
+        val bestMetaByRoot = HashMap<String, VlmGroup>()
+        val refsByRoot = HashMap<String, LinkedHashSet<String>>()
+        contributing.forEach { g ->
+            val root = find(g.memberIds.first())
+            val cur = bestMetaByRoot[root]
+            if (cur == null || g.memberIds.size > cur.memberIds.size) bestMetaByRoot[root] = g
+            refsByRoot.getOrPut(root) { LinkedHashSet() }.addAll(g.referenceIds)
+        }
+
+        val finalGroups = rootToUris.entries.mapIndexed { index, (root, groupUris) ->
+            val meta = bestMetaByRoot[root]
+            val refs = (refsByRoot[root]?.filter { it in groupUris } ?: emptyList())
+                .ifEmpty { groupUris.take(1) }
             PhotoGroup(
                 id = UUID.randomUUID().toString(),
-                title = g.title.ifBlank { "Group ${index + 1}" },
-                reason = g.reason,
-                photoUris = photoUris,
-                referenceUris = referenceUris,
+                title = meta?.title?.takeIf { it.isNotBlank() } ?: "Group ${index + 1}",
+                reason = meta?.reason.orEmpty(),
+                photoUris = groupUris,
+                referenceUris = refs,
+                category = meta?.category,
+                recommended = meta?.recommended ?: true,
             )
-        }.filter { it.photoUris.isNotEmpty() }
-
-        val finalGroups = groups.ifEmpty {
+        }.ifEmpty {
             listOf(
                 PhotoGroup(
                     id = UUID.randomUUID().toString(),
                     title = "All photos",
                     reason = "The model did not propose any groups, so all photos were kept together.",
-                    photoUris = uris,
-                    referenceUris = uris.take(1),
+                    photoUris = distinctUris,
+                    referenceUris = distinctUris.take(1),
                 ),
             )
         }
@@ -65,15 +115,29 @@ class GroupingRepositoryImpl @Inject constructor(
                 provider = providerLabel,
                 model = provider.model,
                 operation = AiOperation.GROUPING,
-                promptTokens = result.usage.promptTokens,
-                completionTokens = result.usage.completionTokens,
-                imageCount = result.usage.imageCount,
-                estimatedCostUsd = result.usage.estimatedCostUsd,
+                promptTokens = promptTokens,
+                completionTokens = completionTokens,
+                imageCount = 0, // grouping analyzes input photos (billed via tokens), generates none
                 timestampMs = clock.now(),
             ),
         )
 
         return finalGroups
+    }
+
+    /** Overlapping index windows covering [0, n). Each is `[first..last]` inclusive. */
+    private fun slidingWindows(n: Int, size: Int, overlap: Int): List<IntRange> {
+        if (n <= size) return listOf(0..(n - 1))
+        val step = (size - overlap).coerceAtLeast(1)
+        val ranges = mutableListOf<IntRange>()
+        var start = 0
+        while (start < n) {
+            val end = minOf(start + size, n)
+            ranges += start..(end - 1)
+            if (end >= n) break
+            start += step
+        }
+        return ranges
     }
 
     /** Short usage label derived from the configured API host, e.g. "api.openai.com". */
