@@ -28,6 +28,9 @@ fun Template.toEntity() = TemplateEntity(
 
 fun GenerationJobEntity.toDomain() = GenerationJob(
     id = id,
+    batchId = batchId,
+    variantIndex = variantIndex,
+    variantLabel = variantLabel,
     groupId = groupId,
     groupTitle = groupTitle,
     prompt = prompt,
@@ -44,6 +47,9 @@ fun GenerationJobEntity.toDomain() = GenerationJob(
 
 fun GenerationJob.toEntity() = GenerationJobEntity(
     id = id,
+    batchId = batchId,
+    variantIndex = variantIndex,
+    variantLabel = variantLabel,
     groupId = groupId,
     groupTitle = groupTitle,
     prompt = prompt,

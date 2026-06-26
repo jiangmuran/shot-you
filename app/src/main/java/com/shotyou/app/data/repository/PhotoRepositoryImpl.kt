@@ -12,6 +12,7 @@ import android.os.Build
 import android.provider.MediaStore
 import com.shotyou.app.domain.ai.AiImage
 import com.shotyou.app.domain.model.Photo
+import com.shotyou.app.domain.repository.DeleteOutcome
 import com.shotyou.app.domain.repository.PhotoRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -229,5 +230,21 @@ class PhotoRepositoryImpl @Inject constructor(
             else -> "jpg"
         }
         return "$name.$ext"
+    }
+
+    override suspend fun deletePhotos(uris: List<String>): DeleteOutcome = withContext(Dispatchers.IO) {
+        val parsed = uris.mapNotNull { runCatching { Uri.parse(it) }.getOrNull() }
+        if (parsed.isEmpty()) return@withContext DeleteOutcome.Deleted(0)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+ requires user consent to delete media the app doesn't own.
+            val pendingIntent = MediaStore.createDeleteRequest(resolver, parsed)
+            DeleteOutcome.NeedsConsent(pendingIntent.intentSender)
+        } else {
+            var count = 0
+            parsed.forEach { uri ->
+                count += runCatching { resolver.delete(uri, null, null) }.getOrDefault(0)
+            }
+            DeleteOutcome.Deleted(count)
+        }
     }
 }

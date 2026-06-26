@@ -9,12 +9,23 @@ import com.shotyou.app.domain.model.Template
 import com.shotyou.app.domain.model.UsageRecord
 import kotlinx.coroutines.flow.Flow
 
+/** Outcome of a delete request. On Android 11+ deleting another app's media needs user
+ *  consent, surfaced as an [IntentSender] the UI must launch. */
+sealed interface DeleteOutcome {
+    /** Deleted directly (legacy / owned media). */
+    data class Deleted(val count: Int) : DeleteOutcome
+    /** The UI must launch this IntentSender to get the user's consent (Android 11+). */
+    data class NeedsConsent(val intentSender: android.content.IntentSender) : DeleteOutcome
+}
+
 /** Reads photos from the device gallery and decodes bytes for AI calls. */
 interface PhotoRepository {
     suspend fun queryImages(limit: Int = 2000): List<Photo>
     suspend fun loadAiImage(uri: String, maxEdge: Int = 1024): AiImage
     /** Persist generated image bytes to the gallery; returns the new content uri. */
     suspend fun saveGeneratedImage(bytes: ByteArray, mimeType: String, displayName: String): String
+    /** Delete the given gallery images. May require user consent (see [DeleteOutcome]). */
+    suspend fun deletePhotos(uris: List<String>): DeleteOutcome
 }
 
 /** Runs VLM grouping over a selection of photos. */
@@ -33,14 +44,35 @@ interface TemplateRepository {
     suspend fun ensureSeeded()
 }
 
+/** One prompt variant to generate as a candidate within a batch. */
+data class GenerationVariant(
+    val prompt: String,
+    val label: String? = null,
+)
+
 /** Enqueues and observes background generation jobs. */
 interface GenerationRepository {
     fun observeJobs(): Flow<List<GenerationJob>>
     fun observeJob(id: String): Flow<GenerationJob?>
+    fun observeBatch(batchId: String): Flow<List<GenerationJob>>
     suspend fun enqueue(
         groupId: String?,
         groupTitle: String?,
         prompt: String,
+        referenceUris: List<String>,
+    ): String
+    /** Enqueue several candidate variants for one group; returns the shared batchId. */
+    suspend fun enqueueBatch(
+        groupId: String?,
+        groupTitle: String?,
+        variants: List<GenerationVariant>,
+        referenceUris: List<String>,
+    ): String
+    /** Add one more candidate (e.g. an "ask for changes" iteration) to an existing batch. */
+    suspend fun addVariant(
+        batchId: String,
+        prompt: String,
+        label: String?,
         referenceUris: List<String>,
     ): String
     suspend fun retry(id: String)

@@ -35,6 +35,9 @@ interface GenerationJobDao {
     @Query("SELECT * FROM generation_jobs WHERE id = :id")
     fun observeById(id: String): Flow<GenerationJobEntity?>
 
+    @Query("SELECT * FROM generation_jobs WHERE batchId = :batchId ORDER BY variantIndex ASC")
+    fun observeByBatch(batchId: String): Flow<List<GenerationJobEntity>>
+
     @Query("SELECT * FROM generation_jobs WHERE id = :id")
     suspend fun getById(id: String): GenerationJobEntity?
 

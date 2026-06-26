@@ -35,4 +35,31 @@ object PromptComposer {
             )
         }
     }
+
+    /** Distinct "flavors" used to vary candidates within a batch (label → extra directive). */
+    private val flavors: List<Pair<String, String>> = listOf(
+        "Natural" to "favor a natural, candid, true-to-life rendition",
+        "Polished" to "favor a crisp, polished, professional rendition",
+        "Warm" to "favor a warm, soft, flattering rendition",
+        "Vivid" to "favor a vivid, vibrant, high-impact rendition",
+    )
+
+    /**
+     * Build [count] candidate prompts from one base, each nudged toward a different flavor so
+     * the user has visibly distinct options to choose between. Returns (label → prompt) pairs.
+     */
+    fun variants(
+        basePrompt: String,
+        style: StylePreset,
+        intensity: Int,
+        count: Int,
+        editableAspects: List<String> = listOf("hair", "expression", "pose", "position"),
+    ): List<Pair<String?, String>> {
+        val base = compose(basePrompt, style, intensity, null, editableAspects)
+        val n = count.coerceIn(1, 4)
+        if (n == 1) return listOf(null to base)
+        return flavors.take(n).map { (label, directive) ->
+            label to "$base\n\nFor this candidate specifically: $directive."
+        }
+    }
 }

@@ -63,6 +63,8 @@
     <string name="generate_back_to_groups">Back to Groups</string>
     <string name="generate_selected_cd">Selected</string>
     <string name="generate_intensity_value">%1$d%%</string>
+    <string name="generate_count_title">Candidates</string>
+    <string name="generate_count_sub">How many options to generate</string>
 
     <!-- Editable aspect chips -->
     <string name="aspect_hair">Hair</string>
@@ -101,6 +103,41 @@
     <string name="result_failed_title">Generation failed</string>
     <string name="result_error_generic">Something went wrong. Please try again.</string>
     <string name="result_share_chooser">Share image</string>
+
+    <!-- Batch / candidate review -->
+    <string name="batch_title">Candidates</string>
+    <string name="batch_no_group_title">No group selected</string>
+    <string name="batch_no_group_body">Go back and start a generation.</string>
+    <string name="batch_empty">Preparing candidates…</string>
+    <string name="batch_candidate_label">Candidate %1$d</string>
+    <string name="batch_generating">Generating candidate %1$d…</string>
+    <string name="batch_failed_title">This candidate failed</string>
+    <string name="batch_image_cd">Generated candidate</string>
+    <string name="batch_retry">Retry</string>
+    <string name="batch_share">Share</string>
+    <string name="batch_share_chooser">Share image</string>
+    <string name="batch_page_cd">Candidate %1$d of %2$d</string>
+    <string name="batch_ask_title">Ask for changes</string>
+    <string name="batch_ask_sub">Describe a tweak to spin up a new candidate</string>
+    <string name="batch_ask_placeholder">e.g. warmer light, brighter smile</string>
+    <string name="batch_ask_button">Refine</string>
+    <string name="batch_ask_label">Refined</string>
+    <string name="batch_ask_needs_success">Open a finished candidate to refine it.</string>
+    <string name="batch_cleanup_title">Clean up originals</string>
+    <string name="batch_cleanup_sub">Tidy this group\'s original photos once you\'re happy.</string>
+    <string name="batch_cleanup_locked">Available once a candidate is ready.</string>
+    <string name="batch_cleanup_keep_all">Keep all originals</string>
+    <string name="batch_cleanup_keep_one">Keep only one original</string>
+    <string name="batch_cleanup_delete_all">Delete all originals</string>
+    <string name="batch_cleanup_pick">Choose the one to keep</string>
+    <string name="batch_cleanup_apply">Apply cleanup</string>
+    <string name="batch_kept_cd">Kept</string>
+    <string name="batch_delete_title">Delete originals?</string>
+    <string name="batch_delete_all_msg">Permanently delete all %1$d original photos in this group?</string>
+    <string name="batch_delete_keep_one_msg">Permanently delete %1$d original photos and keep the one you chose?</string>
+    <string name="batch_delete_confirm">Delete</string>
+    <string name="batch_deleted_snackbar">%1$d photos deleted</string>
+    <string name="batch_done">Done</string>
 
     <!-- Templates -->
     <string name="templates_title">Templates</string>

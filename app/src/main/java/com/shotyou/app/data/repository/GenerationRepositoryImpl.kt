@@ -15,11 +15,13 @@ import com.shotyou.app.domain.model.AiSettings
 import com.shotyou.app.domain.model.GenerationJob
 import com.shotyou.app.domain.model.JobStatus
 import com.shotyou.app.domain.repository.GenerationRepository
+import com.shotyou.app.domain.repository.GenerationVariant
 import com.shotyou.app.domain.repository.SettingsRepository
 import com.shotyou.app.util.Clock
 import com.shotyou.app.util.IdGenerator
 import com.shotyou.app.work.GenerationWorker
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -44,7 +46,56 @@ class GenerationRepositoryImpl @Inject constructor(
     override fun observeJob(id: String): Flow<GenerationJob?> =
         jobDao.observeById(id).map { it?.toDomain() }
 
+    override fun observeBatch(batchId: String): Flow<List<GenerationJob>> =
+        jobDao.observeByBatch(batchId).map { list -> list.map { it.toDomain() } }
+
     override suspend fun enqueue(
+        groupId: String?,
+        groupTitle: String?,
+        prompt: String,
+        referenceUris: List<String>,
+    ): String {
+        val batchId = idGenerator.newId()
+        return createJob(batchId, 0, null, groupId, groupTitle, prompt, referenceUris)
+    }
+
+    override suspend fun enqueueBatch(
+        groupId: String?,
+        groupTitle: String?,
+        variants: List<GenerationVariant>,
+        referenceUris: List<String>,
+    ): String {
+        val batchId = idGenerator.newId()
+        variants.forEachIndexed { index, variant ->
+            createJob(batchId, index, variant.label, groupId, groupTitle, variant.prompt, referenceUris)
+        }
+        return batchId
+    }
+
+    override suspend fun addVariant(
+        batchId: String,
+        prompt: String,
+        label: String?,
+        referenceUris: List<String>,
+    ): String {
+        val existing = jobDao.observeByBatch(batchId).first()
+        val sample = existing.firstOrNull()?.toDomain()
+        val nextIndex = (existing.maxOfOrNull { it.variantIndex } ?: -1) + 1
+        return createJob(
+            batchId = batchId,
+            variantIndex = nextIndex,
+            label = label,
+            groupId = sample?.groupId,
+            groupTitle = sample?.groupTitle,
+            prompt = prompt,
+            referenceUris = referenceUris,
+        )
+    }
+
+    private suspend fun createJob(
+        batchId: String,
+        variantIndex: Int,
+        label: String?,
         groupId: String?,
         groupTitle: String?,
         prompt: String,
@@ -55,6 +106,9 @@ class GenerationRepositoryImpl @Inject constructor(
         val id = idGenerator.newId()
         val job = GenerationJob(
             id = id,
+            batchId = batchId,
+            variantIndex = variantIndex,
+            variantLabel = label,
             groupId = groupId,
             groupTitle = groupTitle,
             prompt = prompt,

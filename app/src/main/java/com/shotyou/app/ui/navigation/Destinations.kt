@@ -21,8 +21,10 @@ object Routes {
     const val GROUPS = "groups"
     const val GENERATE = "generate"
     const val RESULT = "result/{jobId}"
+    const val BATCH = "batch/{batchId}"
 
     fun result(jobId: String) = "result/$jobId"
+    fun batch(batchId: String) = "batch/$batchId"
 }
 
 /** The five bottom-navigation tabs. */

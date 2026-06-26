@@ -67,7 +67,7 @@ private val EDITABLE_ASPECTS = listOf("hair", "expression", "pose", "position")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GenerateScreen(
-    onJobEnqueued: (String) -> Unit,
+    onBatchEnqueued: (String) -> Unit,
     onBack: () -> Unit,
     viewModel: GenerateViewModel = hiltViewModel(),
 ) {
@@ -254,9 +254,30 @@ fun GenerateScreen(
                 }
             }
 
-            // 4. Generate
+            // 6. Candidate count
+            SectionHeader(
+                stringResource(R.string.generate_count_title),
+                stringResource(R.string.generate_count_sub),
+                modifier = Modifier.padding(top = 24.dp),
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                listOf(1, 2, 3).forEach { count ->
+                    FilterChip(
+                        selected = state.count == count,
+                        onClick = { viewModel.setCount(count) },
+                        label = { Text(count.toString()) },
+                    )
+                }
+            }
+
+            // 7. Generate
             Button(
-                onClick = { viewModel.generate(onJobEnqueued) },
+                onClick = { viewModel.generate(onBatchEnqueued) },
                 enabled = state.canGenerate,
                 modifier = Modifier
                     .fillMaxWidth()

@@ -36,9 +36,16 @@ data class Template(
 
 enum class JobStatus { QUEUED, RUNNING, SUCCEEDED, FAILED, CANCELLED }
 
-/** One image-generation request, tracked through the background queue. */
+/**
+ * One image-generation request, tracked through the background queue. Jobs that belong to
+ * the same "generate" action for a group share a [batchId]; [variantIndex] orders the
+ * candidates within that batch.
+ */
 data class GenerationJob(
     val id: String,
+    val batchId: String = "",
+    val variantIndex: Int = 0,
+    val variantLabel: String? = null,
     val groupId: String? = null,
     val groupTitle: String? = null,
     val prompt: String,

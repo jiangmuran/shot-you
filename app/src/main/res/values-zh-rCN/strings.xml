@@ -62,6 +62,8 @@
     <string name="generate_back_to_groups">返回分组</string>
     <string name="generate_selected_cd">已选中</string>
     <string name="generate_intensity_value">%1$d%%</string>
+    <string name="generate_count_title">候选数量</string>
+    <string name="generate_count_sub">一次生成多少个候选</string>
 
     <!-- Editable aspect chips -->
     <string name="aspect_hair">发型</string>
@@ -100,6 +102,41 @@
     <string name="result_failed_title">生成失败</string>
     <string name="result_error_generic">出了点问题，请重试。</string>
     <string name="result_share_chooser">分享图像</string>
+
+    <!-- Batch / candidate review -->
+    <string name="batch_title">候选</string>
+    <string name="batch_no_group_title">未选择分组</string>
+    <string name="batch_no_group_body">返回并发起一次生成。</string>
+    <string name="batch_empty">正在准备候选…</string>
+    <string name="batch_candidate_label">候选 %1$d</string>
+    <string name="batch_generating">正在生成候选 %1$d…</string>
+    <string name="batch_failed_title">该候选生成失败</string>
+    <string name="batch_image_cd">生成的候选</string>
+    <string name="batch_retry">重试</string>
+    <string name="batch_share">分享</string>
+    <string name="batch_share_chooser">分享图像</string>
+    <string name="batch_page_cd">第 %1$d / %2$d 个候选</string>
+    <string name="batch_ask_title">要求修改</string>
+    <string name="batch_ask_sub">描述想要的调整，生成一个新候选</string>
+    <string name="batch_ask_placeholder">例如：更暖的光线，更灿烂的笑容</string>
+    <string name="batch_ask_button">优化</string>
+    <string name="batch_ask_label">已优化</string>
+    <string name="batch_ask_needs_success">请先打开一个已完成的候选再进行优化。</string>
+    <string name="batch_cleanup_title">清理原图</string>
+    <string name="batch_cleanup_sub">满意之后，整理这个分组的原始照片。</string>
+    <string name="batch_cleanup_locked">有候选生成完成后可用。</string>
+    <string name="batch_cleanup_keep_all">保留全部原图</string>
+    <string name="batch_cleanup_keep_one">仅保留一张原图</string>
+    <string name="batch_cleanup_delete_all">删除全部原图</string>
+    <string name="batch_cleanup_pick">选择要保留的一张</string>
+    <string name="batch_cleanup_apply">应用清理</string>
+    <string name="batch_kept_cd">保留</string>
+    <string name="batch_delete_title">删除原图？</string>
+    <string name="batch_delete_all_msg">永久删除该分组中的全部 %1$d 张原始照片？</string>
+    <string name="batch_delete_keep_one_msg">永久删除 %1$d 张原始照片，并保留你选中的那一张？</string>
+    <string name="batch_delete_confirm">删除</string>
+    <string name="batch_deleted_snackbar">已删除 %1$d 张照片</string>
+    <string name="batch_done">完成</string>
 
     <!-- Templates -->
     <string name="templates_title">模板</string>

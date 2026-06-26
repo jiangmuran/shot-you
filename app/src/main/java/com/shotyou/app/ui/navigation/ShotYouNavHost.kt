@@ -22,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.shotyou.app.ui.screens.batch.BatchScreen
 import com.shotyou.app.ui.screens.generate.GenerateScreen
 import com.shotyou.app.ui.screens.groups.GroupsScreen
 import com.shotyou.app.ui.screens.library.LibraryScreen
@@ -105,9 +106,9 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
             }
             composable(Routes.GENERATE) {
                 GenerateScreen(
-                    onJobEnqueued = { _ ->
-                        navController.navigate(Routes.QUEUE) {
-                            popUpTo(Routes.LIBRARY)
+                    onBatchEnqueued = { batchId ->
+                        navController.navigate(Routes.batch(batchId)) {
+                            popUpTo(Routes.GROUPS)
                         }
                     },
                     onBack = { navController.popBackStack() },
@@ -116,6 +117,18 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
             composable(Routes.RESULT) { entry ->
                 val jobId = entry.arguments?.getString("jobId").orEmpty()
                 ResultScreen(jobId = jobId, onBack = { navController.popBackStack() })
+            }
+            composable(Routes.BATCH) { entry ->
+                val batchId = entry.arguments?.getString("batchId").orEmpty()
+                BatchScreen(
+                    batchId = batchId,
+                    onBack = { navController.popBackStack() },
+                    onDone = {
+                        navController.navigate(Routes.LIBRARY) {
+                            popUpTo(Routes.LIBRARY) { inclusive = true }
+                        }
+                    },
+                )
             }
         }
     }

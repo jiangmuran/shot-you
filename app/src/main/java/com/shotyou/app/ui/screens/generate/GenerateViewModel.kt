@@ -8,6 +8,7 @@ import com.shotyou.app.domain.model.PhotoGroup
 import com.shotyou.app.domain.model.StylePreset
 import com.shotyou.app.domain.model.Template
 import com.shotyou.app.domain.repository.GenerationRepository
+import com.shotyou.app.domain.repository.GenerationVariant
 import com.shotyou.app.domain.repository.SettingsRepository
 import com.shotyou.app.domain.repository.TemplateRepository
 import com.shotyou.app.domain.session.SessionStore
@@ -27,6 +28,7 @@ data class GenerateUiState(
     val templates: List<Template> = emptyList(),
     val style: StylePreset = StylePreset.REALISTIC,
     val intensity: Int = 50,
+    val count: Int = 3,
     val optimizing: Boolean = false,
     val enqueuing: Boolean = false,
     val error: String? = null,
@@ -69,6 +71,7 @@ class GenerateViewModel @Inject constructor(
                 templates = templateList,
                 style = state.style ?: StylePreset.fromId(settings.defaultStyle),
                 intensity = state.intensity ?: settings.defaultIntensity,
+                count = state.count,
                 optimizing = state.optimizing,
                 enqueuing = state.enqueuing,
                 error = state.error,
@@ -87,6 +90,8 @@ class GenerateViewModel @Inject constructor(
     fun setStyle(style: StylePreset) = mutableState.update { it.copy(style = style) }
 
     fun setIntensity(intensity: Int) = mutableState.update { it.copy(intensity = intensity.coerceIn(0, 100)) }
+
+    fun setCount(count: Int) = mutableState.update { it.copy(count = count.coerceIn(1, 3)) }
 
     fun applyTemplate(template: Template) = mutableState.update { it.copy(prompt = template.prompt) }
 
@@ -117,7 +122,7 @@ class GenerateViewModel @Inject constructor(
         }
     }
 
-    fun generate(onJobEnqueued: (String) -> Unit) {
+    fun generate(onBatchEnqueued: (String) -> Unit) {
         val state = mutableState.value
         val group = sessionStore.activeGroup.value ?: return
         if (state.enqueuing || state.prompt.isBlank()) return
@@ -129,20 +134,20 @@ class GenerateViewModel @Inject constructor(
                 val settings = settingsRepository.current()
                 val style = state.style ?: StylePreset.fromId(settings.defaultStyle)
                 val intensity = state.intensity ?: settings.defaultIntensity
-                val finalPrompt = PromptComposer.compose(
+                val variants = PromptComposer.variants(
                     basePrompt = state.prompt,
                     style = style,
                     intensity = intensity,
-                    suggestion = null,
-                )
-                val jobId = generationRepository.enqueue(
+                    count = state.count,
+                ).map { (label, prompt) -> GenerationVariant(prompt = prompt, label = label) }
+                val batchId = generationRepository.enqueueBatch(
                     groupId = group.id,
                     groupTitle = group.title,
-                    prompt = finalPrompt,
+                    variants = variants,
                     referenceUris = references,
                 )
                 mutableState.update { it.copy(enqueuing = false) }
-                onJobEnqueued(jobId)
+                onBatchEnqueued(batchId)
             } catch (e: Exception) {
                 mutableState.update { it.copy(enqueuing = false, error = e.message ?: "Could not start generation") }
             }
@@ -154,6 +159,7 @@ class GenerateViewModel @Inject constructor(
         val prompt: String = "",
         val style: StylePreset? = null,
         val intensity: Int? = null,
+        val count: Int = 3,
         val optimizing: Boolean = false,
         val enqueuing: Boolean = false,
         val error: String? = null,

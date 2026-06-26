@@ -17,6 +17,9 @@ data class TemplateEntity(
 @Entity(tableName = "generation_jobs")
 data class GenerationJobEntity(
     @PrimaryKey val id: String,
+    val batchId: String = "",
+    val variantIndex: Int = 0,
+    val variantLabel: String? = null,
     val groupId: String?,
     val groupTitle: String?,
     val prompt: String,
