@@ -36,6 +36,8 @@ captures/
 # Keystore files
 *.jks
 *.keystore
+# ...except the intentional shared app-signing key (non-secret, dev signing only)
+!keystore/shotyou.jks
 
 # Mac
 .DS_Store
