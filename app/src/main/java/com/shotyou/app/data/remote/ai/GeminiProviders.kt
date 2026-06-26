@@ -118,7 +118,14 @@ internal class GeminiImageGenProvider(
         val response = service.generateContent(
             url = url(model),
             apiKey = apiKey,
-            request = GeminiGenerateRequest(contents = listOf(GeminiContent(role = "user", parts = parts))),
+            request = GeminiGenerateRequest(
+                contents = listOf(GeminiContent(role = "user", parts = parts)),
+                // Image models (e.g. gemini-2.5-flash-image) require the response
+                // modalities to be declared explicitly, otherwise the call is rejected.
+                generationConfig = GeminiGenerationConfig(
+                    responseModalities = listOf("TEXT", "IMAGE"),
+                ),
+            ),
         )
         response.failIfError()
         val imagePart = response.candidates.firstOrNull()?.content?.parts

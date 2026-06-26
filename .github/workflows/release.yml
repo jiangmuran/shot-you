@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags: [ "v*" ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.0)"
+        required: true
+        default: "v0.1.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Resolve tag
+        id: tag
+        run: echo "value=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Stage APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk "shot-you-${{ steps.tag.outputs.value }}-debug.apk"
+
+      - name: Create / update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.tag.outputs.value }}"
+          gh release create "$TAG" "shot-you-${TAG}-debug.apk" \
+            --title "Shot You $TAG" \
+            --notes "Automated build of Shot You $TAG. Install the attached debug APK, then add your AI provider API key in Settings." \
+            --target "${{ github.sha }}" \
+          || gh release upload "$TAG" "shot-you-${TAG}-debug.apk" --clobber
