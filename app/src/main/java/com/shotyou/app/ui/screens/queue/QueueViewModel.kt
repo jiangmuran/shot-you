@@ -20,14 +20,14 @@ class QueueViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun retry(id: String) {
-        viewModelScope.launch { repository.retry(id) }
+        viewModelScope.launch { runCatching { repository.retry(id) } }
     }
 
     fun cancel(id: String) {
-        viewModelScope.launch { repository.cancel(id) }
+        viewModelScope.launch { runCatching { repository.cancel(id) } }
     }
 
     fun clearFinished() {
-        viewModelScope.launch { repository.clearFinished() }
+        viewModelScope.launch { runCatching { repository.clearFinished() } }
     }
 }

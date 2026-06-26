@@ -36,6 +36,6 @@ class ResultViewModel @Inject constructor(
 
     fun retry() {
         val id = jobId.value ?: return
-        viewModelScope.launch { generationRepository.retry(id) }
+        viewModelScope.launch { runCatching { generationRepository.retry(id) } }
     }
 }

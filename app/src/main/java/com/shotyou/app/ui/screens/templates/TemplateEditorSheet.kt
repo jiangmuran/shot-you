@@ -57,9 +57,11 @@ fun TemplateEditorSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val readOnly = template.builtIn
 
-    var name by remember { mutableStateOf(template.name) }
-    var prompt by remember { mutableStateOf(template.prompt) }
-    var tags by remember { mutableStateOf(template.tags.joinToString(", ")) }
+    // Key on the template so switching target (e.g. Duplicate swaps to an editable copy)
+    // re-initializes the fields instead of keeping the previous template's stale values.
+    var name by remember(template) { mutableStateOf(template.name) }
+    var prompt by remember(template) { mutableStateOf(template.prompt) }
+    var tags by remember(template) { mutableStateOf(template.tags.joinToString(", ")) }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(

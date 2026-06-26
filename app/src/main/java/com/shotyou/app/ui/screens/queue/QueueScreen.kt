@@ -33,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.shotyou.app.R
 import com.shotyou.app.domain.model.GenerationJob
@@ -55,7 +55,7 @@ fun QueueScreen(
     onOpenResult: (String) -> Unit,
     viewModel: QueueViewModel = hiltViewModel(),
 ) {
-    val jobs by viewModel.jobs.collectAsState()
+    val jobs by viewModel.jobs.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {

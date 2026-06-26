@@ -2,7 +2,7 @@
 
 **English** · [简体中文](README.zh-CN.md)
 
-# 📸 Shot You
+# Shot You
 
 ### Pick your shots — let AI keep the best one.
 
@@ -20,7 +20,7 @@ and fuses the best of each into one flawless shot.*
 
 ---
 
-## ✨ The idea
+## The idea
 
 You snap a burst — same person, same place, slightly different pose, eyes half-closed in
 three of them. Normally you scroll, pinch-zoom, agonise, and keep one mediocre frame.
@@ -39,83 +39,85 @@ three of them. Normally you scroll, pinch-zoom, agonise, and keep one mediocre f
 
 ---
 
-## 🧩 Features
+## Features
 
 | | |
 |---|---|
-| 🖼️ **Full album access** | Modern Photo Picker + media permissions, incl. Android 14 *partial* (user-selected) access, with graceful fallbacks down to Android 8. |
-| 🧠 **Smart grouping** | VLM clusters visually-similar shots and returns a title + reason + reference picks per group. |
-| 🎯 **Reference selection** | The best frames of each group are pre-selected and fully editable. |
-| ✍️ **Prompt fusion** | Saved template library (with built-ins) + one-tap **LLM prompt optimization**; quick-insert chips for hair / expression / pose / position. |
-| 🌅 **Generation & regenerate** | One fused image from references + prompt; regenerate until you're happy; auto-saved to your gallery; share sheet. |
-| 🛰️ **Background queue** | WorkManager-driven job queue with configurable **concurrency**, **request pacing**, retries and Wi-Fi-only mode — fully unobtrusive. |
-| 📊 **Usage dashboard** | Call counts by provider & operation, token totals, image count and estimated cost. |
-| 🔌 **Bring-your-own AI** | Mix & match providers per role (VLM / LLM / image). **Gemini** and **OpenAI** built in. Keys stored **on-device**, no backend. |
-| 🎨 **Modern UI** | Jetpack Compose, **Material 3**, dynamic color, edge-to-edge, dark mode. |
+| **Full album access** | Modern Photo Picker + media permissions, incl. Android 14 *partial* (user-selected) access, with graceful fallbacks down to Android 8. |
+| **Smart grouping** | VLM clusters visually-similar shots and returns a title + reason + reference picks per group. |
+| **Reference selection** | The best frames of each group are pre-selected and fully editable. |
+| **Prompt fusion** | Saved template library (with built-ins) + one-tap **LLM prompt optimization**; quick-insert chips for hair / expression / pose / position. |
+| **Generation & regenerate** | One fused image from references + prompt; regenerate until you're happy; auto-saved to your gallery; share sheet. |
+| **Background queue** | WorkManager-driven job queue with configurable **concurrency**, **request pacing**, retries and Wi-Fi-only mode — fully unobtrusive. |
+| **Usage dashboard** | Call counts by provider & operation, token totals, image count and estimated cost. |
+| **Style & intensity** | Realistic / Beautify / Cinematic / Fresh / Artistic presets + an intensity slider; configurable defaults. Prompts tuned for "beautiful but believable" — not the plastic AI look. |
+| **Bring-your-own AI** | Any **OpenAI-compatible** endpoint with a **custom API host** (official / proxy / local). Per-million token pricing for the cost dashboard. Keys stored **on-device**, no backend. |
+| **Bilingual** | In-app switch between English / 简体中文 / system. |
+| **Modern UI** | Jetpack Compose, **Material 3**, dynamic color, edge-to-edge, dark mode. |
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 Clean, modular MVVM — a single-module app organised by layer:
 
 ```
-ui/            Compose screens + ViewModels  (Library · Groups · Generate ·
-               Result · Queue · Templates · Usage · Settings) + navigation + theme
-domain/        Models · repository interfaces · AI provider contracts · SessionStore
+ui/         Compose screens + ViewModels (Library, Groups, Generate, Batch,
+            Result, Queue, Templates, Usage, Settings) + navigation + theme
+domain/     models, repository interfaces, AI contracts, PromptComposer, SessionStore
 data/
-  local/       Room (templates · jobs · usage)
-  remote/ai/   Gemini + OpenAI clients, DTOs, AiProviderFactory
-  repository/  Repository implementations
-  settings/    DataStore-backed settings
-work/          WorkManager generation worker
-di/            Hilt modules
+  local/    Room (templates, jobs, usage)
+  remote/   OpenAI-compatible client, DTOs, AiProviderFactory
+  repository/  repository implementations
+  settings/ DataStore-backed settings
+work/       WorkManager generation worker
+di/         Hilt modules
 ```
 
-- **Hilt** for DI · **Room** + **DataStore** for persistence · **WorkManager** for the
-  queue · **Retrofit/OkHttp** + **kotlinx.serialization** for the network layer ·
+- **Hilt** for DI, **Room** + **DataStore** for persistence, **WorkManager** for the
+  queue, **Retrofit/OkHttp** + **kotlinx.serialization** for the network layer, and
   **Coil** for images.
 - AI is fully abstracted behind `VlmProvider` / `LlmProvider` / `ImageGenProvider` and an
   `AiProviderFactory`, so adding a provider is a single class.
 
-> 🛠️ Fun fact: the entire app was built in parallel — the foundation and contracts first,
+> Fun fact: the entire app was built in parallel — the foundation and contracts first,
 > then five features developed simultaneously in isolated git worktrees and merged, with
 > GitHub Actions as the build gate. See the commit history for the full build log.
 
 ---
 
-## 🚀 Getting started
+## Getting started
 
 ### Install
 Grab the latest **`shot-you-debug.apk`** from the
 [Releases](https://github.com/jiangmuran/shot-you/releases) page (or from the
 [CI artifacts](https://github.com/jiangmuran/shot-you/actions)) and install it.
 
-### Add your API key
-Open **Settings** and paste a key for the provider(s) you want. Keys never leave your
-device.
+### Configure the endpoint
+Open **Settings** and fill in:
 
-| Provider | Get a key | Default models (editable) |
-|---|---|---|
-| **Google Gemini** | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | `gemini-2.5-flash` (VLM/LLM) · `gemini-2.5-flash-image` (image) |
-| **OpenAI** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | `gpt-4o` (VLM) · `gpt-4o-mini` (LLM) · `gpt-image-1` (image) |
+- **API Host** — defaults to `https://api.openai.com/v1`; change it to any OpenAI-compatible
+  endpoint (official, a proxy, or a local server).
+- **API Key** — stored on-device only, never uploaded.
+- **Models** — set the VLM (grouping), LLM (prompt optimization) and image models
+  separately (defaults: `gpt-4o`, `gpt-4o-mini`, `gpt-image-2`).
 
-You can assign a different provider to each role (e.g. Gemini for grouping, OpenAI for
-images).
+Any service implementing the OpenAI `chat/completions` and `images/edits` APIs will work.
 
 ### Use it
-**Library** → multi-select photos → **Group with AI** → open a group → pick a template /
-write & optimize a prompt → **Generate** → watch it in **Queue** → open the **Result** →
-regenerate if you like.
+**Library** → multi-select photos (drag to select) → **Group with AI** → review the groups
+→ open one → pick a template / write & optimize a prompt, choose a style & intensity →
+**Generate** (2-3 candidates) → swipe to pick the best, ask for changes, then tidy up the
+originals.
 
 ---
 
-## 🔨 Build from source
+## Build from source
 
 ```bash
 git clone https://github.com/jiangmuran/shot-you.git
 cd shot-you
-./gradlew assembleDebug      # → app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleDebug # → app/build/outputs/apk/debug/app-debug.apk
 ```
 
 Requires **JDK 17** and the Android SDK (**compileSdk 35**). CI builds a debug APK on
@@ -123,16 +125,16 @@ every push.
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
+- [ ] Fully automatic pipeline: classify everything, per-category style rules, one tap to start
+- [ ] Foreground-service queue with live status-bar progress, pause / resume
 - [ ] Side-by-side before/after compare on the result screen
 - [ ] On-device pre-clustering (perceptual hash) to cut VLM cost on huge batches
 - [ ] Inpainting / targeted edits ("just fix the eyes")
-- [ ] Multiple candidates per generation, pick-the-best
-- [ ] More providers (Stability, local models)
 
 Contributions welcome.
 
-## 📄 License
+## License
 
 [MIT](LICENSE) © 2026 jiangmuran

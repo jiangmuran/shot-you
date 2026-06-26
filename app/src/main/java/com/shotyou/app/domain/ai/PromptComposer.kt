@@ -43,12 +43,18 @@ object PromptComposer {
 
     /** Shared instruction that pushes for "beautiful but believable" — not the plastic AI look. */
     const val REALISM_GUIDANCE: String =
-        "The result must look like a genuine candid photograph taken on a real camera: natural skin " +
-            "texture with subtle pores and imperfections, realistic and physically-plausible lighting, " +
-            "soft natural shadows, believable depth of field, and a tasteful real-world composition. " +
-            "Make it attractive, but never at the cost of realism — avoid the tell-tale over-smoothed, " +
-            "over-sharpened, waxy, over-saturated 'AI look'. A viewer should not be able to tell it was " +
-            "AI-generated. Find the right balance between flattering and authentic."
+        "Render it with the eye of a skilled professional photographer. " +
+            "Composition: use strong, intentional framing — rule of thirds, balanced negative space, " +
+            "clean leading lines, a flattering camera angle and focal length (e.g. 35-85mm look), and " +
+            "clear subject separation from a tidy, non-distracting background. " +
+            "Light: deliberate, directional yet soft lighting with natural falloff and gentle shadows " +
+            "(think golden hour or soft window light), harmonious and true-to-life color grading. " +
+            "Realism: it must look like a genuine candid photograph from a real camera — natural skin " +
+            "texture with subtle pores and imperfections, physically-plausible reflections and depth of " +
+            "field, fine grain. Avoid the tell-tale over-smoothed, waxy, over-sharpened, over-saturated " +
+            "'AI look', plastic skin, mangled hands/teeth, or impossible lighting. " +
+            "Make it genuinely beautiful, but never at the cost of believability — a viewer should not be " +
+            "able to tell it was AI-generated. Strike the balance between flattering and authentic."
 
     /** Distinct "flavors" used to vary candidates within a batch (label → extra directive). */
     private val flavors: List<Pair<String, String>> = listOf(

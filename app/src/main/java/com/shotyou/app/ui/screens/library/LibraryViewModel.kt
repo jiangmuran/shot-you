@@ -46,13 +46,12 @@ class LibraryViewModel @Inject constructor(
 
     /** Called by the screen whenever the permission state is (re)computed. */
     fun onPermissionResult(access: PhotoAccess) {
-        val previous = _uiState.value.permission
         _uiState.update { it.copy(permission = access) }
         if (access != PhotoAccess.NONE) {
-            // (Re)load when access is granted or the user changed the selected set.
-            if (previous != access || _uiState.value.photos.isEmpty()) {
-                refresh()
-            }
+            // Always reload on a non-NONE result: with PARTIAL access the user re-opens the
+            // photo picker to add more, and the access value stays PARTIAL — so we must refresh
+            // to pick up the newly-selected photos.
+            refresh()
         } else {
             _uiState.update { it.copy(photos = emptyList(), selectedUris = emptySet()) }
         }
