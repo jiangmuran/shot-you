@@ -15,21 +15,40 @@ android {
         applicationId = "com.shotyou.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        // Overridable from CI (-PappVersionCode / -PappVersionName) so release builds
+        // track the git tag; sensible defaults for local builds.
+        versionCode = (project.findProperty("appVersionCode") as String?)?.toIntOrNull() ?: 3
+        versionName = (project.findProperty("appVersionName") as String?) ?: "0.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
+    }
+
+    // A committed, stable app-signing key so every build/release shares one signature
+    // (lets users install updates over a previous version). Not a secret — it only signs
+    // this open dev build. Falls back to the default debug key if the file is absent.
+    val sharedKeystore = rootProject.file("keystore/shotyou.jks")
+    signingConfigs {
+        if (sharedKeystore.exists()) {
+            create("shared") {
+                storeFile = sharedKeystore
+                storePassword = "shotyou"
+                keyAlias = "shotyou"
+                keyPassword = "shotyou"
+            }
+        }
     }
 
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
             isMinifyEnabled = false
+            if (sharedKeystore.exists()) signingConfig = signingConfigs.getByName("shared")
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            if (sharedKeystore.exists()) signingConfig = signingConfigs.getByName("shared")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -32,10 +32,16 @@ jobs:
 
       - name: Resolve tag
         id: tag
-        run: echo "value=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "value=$TAG" >> "$GITHUB_OUTPUT"
+          V="${TAG#v}"
+          IFS='.' read -r MA MI PA <<< "$V"
+          echo "name=$V" >> "$GITHUB_OUTPUT"
+          echo "code=$(( ${MA:-0} * 10000 + ${MI:-0} * 100 + ${PA:-0} ))" >> "$GITHUB_OUTPUT"
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --stacktrace -PappVersionName=${{ steps.tag.outputs.name }} -PappVersionCode=${{ steps.tag.outputs.code }}
 
       - name: Stage APK
         run: cp app/build/outputs/apk/debug/app-debug.apk "shot-you-${{ steps.tag.outputs.value }}-debug.apk"
