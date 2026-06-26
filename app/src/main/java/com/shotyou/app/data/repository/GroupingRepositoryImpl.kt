@@ -38,6 +38,15 @@ class GroupingRepositoryImpl @Inject constructor(
         val provider = providerFactory.vlm(settings)
         val providerLabel = hostLabel(settings.apiBaseUrl)
 
+        // Ask the VLM to write titles/reasons in the app language.
+        val langDirective = if (com.shotyou.app.util.LangUtil.isChinese()) {
+            "Write each group's title and reason in Simplified Chinese."
+        } else {
+            null
+        }
+        val effectiveInstruction = listOfNotNull(instruction?.takeIf { it.isNotBlank() }, langDirective)
+            .joinToString("\n").takeIf { it.isNotBlank() }
+
         val windowSize = settings.vlmBatchSize.coerceAtLeast(2)
         val overlap = (windowSize / 4).coerceIn(1, windowSize - 1)
 
@@ -59,7 +68,7 @@ class GroupingRepositoryImpl @Inject constructor(
         for (window in slidingWindows(distinctUris.size, windowSize, overlap)) {
             val windowUris = distinctUris.subList(window.first, window.last + 1)
             val images = windowUris.map { photoRepository.loadAiImage(it) }
-            val result = provider.groupSimilar(images, instruction)
+            val result = provider.groupSimilar(images, effectiveInstruction)
             promptTokens += result.usage.promptTokens
             completionTokens += result.usage.completionTokens
 

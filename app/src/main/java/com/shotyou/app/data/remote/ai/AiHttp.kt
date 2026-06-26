@@ -44,11 +44,11 @@ internal object GroupingContract {
 
     fun instruction(imageCount: Int, userInstruction: String?): String = buildString {
         appendLine("You are given $imageCount photos, indexed 0 to ${imageCount - 1} in the order provided.")
-        appendLine("Cluster together photos that are visually similar or near-duplicates: the same scene or people, burst shots, or only minor differences in pose, expression or framing.")
-        appendLine("Be smart and resourceful: beyond near-duplicates, you MAY also group photos that COMPLEMENT each other to make one better result — e.g. a strong empty scenic background together with a portrait of a person who could be placed into it, or a unique vantage point/angle that a subject from another shot could be composited into. Treat every photo as a usable asset; try not to waste a great background, a unique angle, or a good portrait.")
-        appendLine("Every photo index must appear in exactly one group. A photo with no good match or complement forms its own single-member group.")
+        appendLine("Describe ONLY what is actually visible in the photos. Never invent or add subjects, scenery, people or content that are not present. Base the title and reason strictly on what you see.")
+        appendLine("Cluster together photos that are visually similar or near-duplicates: the same subject/scene/people, burst shots, or only minor differences in pose, expression or framing.")
+        appendLine("Every photo index must appear in exactly one group. A photo with no similar match forms its own single-member group.")
         appendLine("When there are many photos, stay organized and consistent — do NOT merge unrelated content just to reduce the number of groups, and do not get confused by the volume.")
-        appendLine("For each group, nominate 1-2 best reference frames: the best subject/face (sharp, eyes open) and, when the group is a creative combination, also the best background/scene frame.")
+        appendLine("For each group, nominate 1-2 best reference frames (sharpest, best subject, best composition).")
         appendLine("Also classify each group with a category: one of \"people\", \"scenery\", \"food\", \"animal\", \"object\", or \"other\".")
         appendLine("Set \"recommended\" to false for groups that are NOT worth generating a new image for — e.g. a group that is essentially redundant with another group, or low-value content. Set it to true otherwise. Image generation is expensive, so be selective.")
         userInstruction?.takeIf { it.isNotBlank() }?.let {

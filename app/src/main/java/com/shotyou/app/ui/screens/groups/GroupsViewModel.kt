@@ -93,6 +93,7 @@ class GroupsViewModel @Inject constructor(
                         style = style,
                         intensity = settings.defaultIntensity,
                         count = settings.candidatesPerItem,
+                        chinese = com.shotyou.app.util.LangUtil.isChinese(),
                     ).map { (label, p) -> GenerationVariant(p, label) }
                     generationRepository.enqueueBatch(
                         groupId = group.id,

@@ -12,27 +12,34 @@ object DefaultModels {
  * A look the user can pick for a generation. [directive] is the (English) instruction
  * fed to the image model; the display label is localized in the UI by [id].
  */
-enum class StylePreset(val id: String, val directive: String) {
+enum class StylePreset(val id: String, val directive: String, val directiveZh: String) {
     REALISTIC(
         "realistic",
         "photorealistic and faithful to the original subject, natural skin texture and lighting, no over-processing",
+        "写实,忠于原始主体,自然的肤质与光线,不过度处理",
     ),
     BEAUTIFY(
         "beautify",
         "subtly beautified: clear smooth skin, flattering soft light, bright eyes, polished yet still natural",
+        "适度美化:肤质干净细腻,讨喜的柔光,明亮的双眼,精致但依然自然",
     ),
     CINEMATIC(
         "cinematic",
         "cinematic look with dramatic lighting, shallow depth of field and filmic color grading",
+        "电影感:戏剧性光线,浅景深,电影级调色",
     ),
     FRESH(
         "fresh",
         "clean fresh natural style, soft daylight, airy bright tones and true-to-life colors",
+        "清新自然风格,柔和日光,通透明亮的色调,真实自然的色彩",
     ),
     ARTISTIC(
         "artistic",
         "artistic stylized rendering with expressive color and light and a tasteful creative interpretation",
+        "艺术化的风格化呈现,富有表现力的色彩与光影,有品味的创意演绎",
     );
+
+    fun directive(chinese: Boolean): String = if (chinese) directiveZh else directive
 
     companion object {
         fun fromId(id: String): StylePreset = entries.firstOrNull { it.id == id } ?: REALISTIC

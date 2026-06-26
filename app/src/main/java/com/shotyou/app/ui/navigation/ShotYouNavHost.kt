@@ -52,15 +52,7 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
                         val label = stringResource(tab.labelRes)
                         NavigationBarItem(
                             selected = selected,
-                            onClick = {
-                                navController.navigate(tab.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
+                            onClick = { navController.navigateToTab(tab.route) },
                             icon = { androidx.compose.material3.Icon(tab.icon, contentDescription = label) },
                             label = { Text(label) },
                         )
@@ -100,9 +92,7 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
             }
             composable(Routes.GROUPS) {
                 GroupsScreen(
-                    onStarted = {
-                        navController.navigate(Routes.QUEUE) { popUpTo(Routes.LIBRARY) }
-                    },
+                    onStarted = { navController.navigateToTab(Routes.QUEUE) },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -125,14 +115,20 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
                 BatchScreen(
                     batchId = batchId,
                     onBack = { navController.popBackStack() },
-                    onDone = {
-                        navController.navigate(Routes.LIBRARY) {
-                            popUpTo(Routes.LIBRARY) { inclusive = true }
-                        }
-                    },
+                    onDone = { navController.navigateToTab(Routes.LIBRARY) },
                 )
             }
         }
+    }
+}
+
+/** Navigate to a bottom-tab destination with consistent saved-state handling so every
+ *  tab stays reachable (also used by "Start"/"Done" so they don't break the back stack). */
+private fun NavHostController.navigateToTab(route: String) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
 

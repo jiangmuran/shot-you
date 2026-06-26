@@ -139,6 +139,7 @@ class GenerateViewModel @Inject constructor(
                     style = style,
                     intensity = intensity,
                     count = state.count,
+                    chinese = com.shotyou.app.util.LangUtil.isChinese(),
                 ).map { (label, prompt) -> GenerationVariant(prompt = prompt, label = label) }
                 val batchId = generationRepository.enqueueBatch(
                     groupId = group.id,
