@@ -77,6 +77,33 @@ class GenerationNotifications(private val context: Context) {
     fun notifyFailure() =
         post(TERMINAL_ID, buildTerminal(R.string.notif_failed_title, R.string.notif_failed_text))
 
+    /**
+     * Post (or update) an ongoing overall queue-progress notification under a distinct id, e.g.
+     * "Generating photos · 2/5". Determinate progress bar. Posted under [QUEUE_ID] so it is
+     * independent of the per-job [NOTIF_ID]/[TERMINAL_ID] notifications.
+     */
+    fun notifyQueueProgress(done: Int, total: Int) {
+        ensureChannel()
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setContentTitle(context.getString(R.string.notif_queue_progress_title))
+            .setContentText(context.getString(R.string.notif_queue_progress_text, done, total))
+            .setSmallIcon(appIcon())
+            .setOngoing(true)
+            .setProgress(total, done, false)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+        post(QUEUE_ID, notification)
+    }
+
+    /** Cancel the overall queue-progress notification. */
+    fun cancelQueueProgress() {
+        try {
+            NotificationManagerCompat.from(context).cancel(QUEUE_ID)
+        } catch (_: SecurityException) {
+            // No notification permission; ignore.
+        }
+    }
+
     private fun post(id: Int, notification: Notification) {
         // Guard a missing POST_NOTIFICATIONS permission (Android 13+) — just no-op.
         try {
@@ -94,5 +121,6 @@ class GenerationNotifications(private val context: Context) {
         const val CHANNEL_ID = "shotyou_generation"
         const val NOTIF_ID = 4201
         const val TERMINAL_ID = 4202
+        const val QUEUE_ID = 4203
     }
 }

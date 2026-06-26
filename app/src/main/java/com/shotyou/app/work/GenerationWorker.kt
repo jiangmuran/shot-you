@@ -23,6 +23,7 @@ import com.shotyou.app.util.Clock
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 /**
  * Runs one image-generation [GenerationJob] in the background. Enqueued by
@@ -104,6 +105,7 @@ class GenerationWorker @AssistedInject constructor(
                 ),
             )
             if (notify) runCatching { notifications.notifySuccess() }
+            if (settings.progressNotifications) updateQueueProgress()
             Result.success()
         } catch (t: Throwable) {
             if (settings.autoRetryOnFailure && runAttemptCount < settings.maxRetries) {
@@ -139,7 +141,33 @@ class GenerationWorker @AssistedInject constructor(
                     )
                 }
                 if (notify) runCatching { notifications.notifyFailure() }
+                if (settings.progressNotifications) updateQueueProgress()
                 Result.failure()
+            }
+        }
+    }
+
+    /**
+     * Recompute overall queue progress from the dao and surface it as an ongoing notification.
+     * `done` counts terminal jobs (SUCCEEDED/FAILED/CANCELLED) among all non-cleared jobs;
+     * when nothing is left QUEUED/RUNNING the notification is cancelled. Best-effort.
+     */
+    private suspend fun updateQueueProgress() {
+        runCatching {
+            val all = jobDao.observeAll().first().map { it.toDomain() }
+            val total = all.size
+            val done = all.count {
+                it.status == JobStatus.SUCCEEDED ||
+                    it.status == JobStatus.FAILED ||
+                    it.status == JobStatus.CANCELLED
+            }
+            val anyActive = all.any {
+                it.status == JobStatus.QUEUED || it.status == JobStatus.RUNNING
+            }
+            if (total > 0 && anyActive) {
+                notifications.notifyQueueProgress(done, total)
+            } else {
+                notifications.cancelQueueProgress()
             }
         }
     }

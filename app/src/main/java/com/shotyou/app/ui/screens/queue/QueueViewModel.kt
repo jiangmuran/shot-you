@@ -19,6 +19,18 @@ class QueueViewModel @Inject constructor(
     val jobs: StateFlow<List<GenerationJob>> = repository.observeJobs()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val paused: StateFlow<Boolean> = repository.observePaused()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    /** Pause if running, resume if paused. */
+    fun togglePause() {
+        viewModelScope.launch {
+            runCatching {
+                if (paused.value) repository.resumeQueue() else repository.pauseQueue()
+            }
+        }
+    }
+
     fun retry(id: String) {
         viewModelScope.launch { runCatching { repository.retry(id) } }
     }

@@ -112,6 +112,11 @@
     <string name="queue_status_done">Done</string>
     <string name="queue_status_failed">Failed</string>
     <string name="queue_status_cancelled">Cancelled</string>
+    <string name="queue_pause">Pause queue</string>
+    <string name="queue_resume">Resume queue</string>
+    <string name="queue_paused">Paused</string>
+    <string name="queue_overall_progress">Overall progress</string>
+    <string name="queue_progress_count">%1$d/%2$d</string>
 
     <!-- Result -->
     <string name="result_title">Result</string>

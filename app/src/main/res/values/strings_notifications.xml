@@ -13,4 +13,8 @@
     <string name="notif_success_text">Tap to view your generated photo.</string>
     <string name="notif_failed_title">Generation failed</string>
     <string name="notif_failed_text">Something went wrong. Please try again.</string>
+
+    <!-- Overall queue-progress notification -->
+    <string name="notif_queue_progress_title">Generating photos</string>
+    <string name="notif_queue_progress_text">%1$d/%2$d done</string>
 </resources>

@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -27,6 +29,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -56,12 +59,26 @@ fun QueueScreen(
     viewModel: QueueViewModel = hiltViewModel(),
 ) {
     val jobs by viewModel.jobs.collectAsStateWithLifecycle()
+    val paused by viewModel.paused.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.queue_title)) },
                 actions = {
+                    IconButton(onClick = viewModel::togglePause) {
+                        if (paused) {
+                            Icon(
+                                Icons.Default.PlayArrow,
+                                contentDescription = stringResource(R.string.queue_resume),
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Pause,
+                                contentDescription = stringResource(R.string.queue_pause),
+                            )
+                        }
+                    }
                     if (jobs.any { it.status.isFinished }) {
                         TextButton(onClick = viewModel::clearFinished) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -76,23 +93,81 @@ fun QueueScreen(
         if (jobs.isEmpty()) {
             EmptyQueue(padding)
         } else {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                items(jobs, key = { it.id }) { job ->
-                    JobCard(
-                        job = job,
-                        onOpenResult = { onOpenResult(job.id) },
-                        onRetry = { viewModel.retry(job.id) },
-                        onCancel = { viewModel.cancel(job.id) },
-                    )
+                QueueProgressHeader(
+                    done = jobs.count { it.status.isFinished },
+                    total = jobs.size,
+                    paused = paused,
+                )
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(jobs, key = { it.id }) { job ->
+                        JobCard(
+                            job = job,
+                            onOpenResult = { onOpenResult(job.id) },
+                            onRetry = { viewModel.retry(job.id) },
+                            onCancel = { viewModel.cancel(job.id) },
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun QueueProgressHeader(done: Int, total: Int, paused: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.queue_overall_progress),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f),
+            )
+            if (paused) {
+                AssistChip(
+                    onClick = {},
+                    enabled = false,
+                    label = {
+                        Text(
+                            stringResource(R.string.queue_paused),
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        disabledContainerColor = Color(0xFF9A6700).copy(alpha = 0.14f),
+                        disabledLabelColor = Color(0xFF9A6700),
+                    ),
+                    border = null,
+                )
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(
+                text = stringResource(R.string.queue_progress_count, done, total),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        LinearProgressIndicator(
+            progress = { if (total > 0) done.toFloat() / total else 0f },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
