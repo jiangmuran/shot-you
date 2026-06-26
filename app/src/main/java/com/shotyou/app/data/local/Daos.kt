@@ -41,6 +41,9 @@ interface GenerationJobDao {
     @Query("SELECT * FROM generation_jobs WHERE id = :id")
     suspend fun getById(id: String): GenerationJobEntity?
 
+    @Query("SELECT * FROM generation_jobs WHERE status IN ('QUEUED','RUNNING') ORDER BY createdAtMs ASC")
+    suspend fun getActive(): List<GenerationJobEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: GenerationJobEntity)
 

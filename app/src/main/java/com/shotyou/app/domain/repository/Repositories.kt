@@ -78,6 +78,13 @@ interface GenerationRepository {
     suspend fun retry(id: String)
     suspend fun cancel(id: String)
     suspend fun clearFinished()
+
+    /** Whether the queue is paused (no new jobs start until resumed). */
+    fun observePaused(): Flow<Boolean>
+    /** Pause: stop active work and keep jobs queued. */
+    suspend fun pauseQueue()
+    /** Resume: re-enqueue all queued jobs. */
+    suspend fun resumeQueue()
 }
 
 /** Usage / call-count dashboard data. */

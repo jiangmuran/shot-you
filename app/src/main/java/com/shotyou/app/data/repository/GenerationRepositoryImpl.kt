@@ -145,7 +145,29 @@ class GenerationRepositoryImpl @Inject constructor(
 
     override suspend fun clearFinished() = jobDao.clearFinished()
 
+    override fun observePaused(): Flow<Boolean> =
+        settingsRepository.settings.map { it.queuePaused }
+
+    override suspend fun pauseQueue() {
+        settingsRepository.update { it.copy(queuePaused = true) }
+        jobDao.getActive().forEach { e ->
+            workManager.cancelUniqueWork(workName(e.id))
+            if (e.status == JobStatus.RUNNING.name) {
+                jobDao.update(e.copy(status = JobStatus.QUEUED.name, updatedAtMs = clock.now()))
+            }
+        }
+    }
+
+    override suspend fun resumeQueue() {
+        settingsRepository.update { it.copy(queuePaused = false) }
+        val settings = settingsRepository.current()
+        jobDao.getActive()
+            .filter { it.status == JobStatus.QUEUED.name }
+            .forEach { e -> enqueueWork(e.id, settings) }
+    }
+
     private fun enqueueWork(id: String, settings: AiSettings) {
+        if (settings.queuePaused) return // queued but not started until resumed
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(
                 if (settings.requireWifi) NetworkType.UNMETERED else NetworkType.CONNECTED,

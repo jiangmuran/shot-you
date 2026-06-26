@@ -41,6 +41,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val REQUIRE_WIFI = booleanPreferencesKey("require_wifi")
         val RUN_IN_BACKGROUND = booleanPreferencesKey("run_in_background")
         val PROGRESS_NOTIFICATIONS = booleanPreferencesKey("progress_notifications")
+        val QUEUE_PAUSED = booleanPreferencesKey("queue_paused")
         val AUTO_OPTIMIZE = booleanPreferencesKey("auto_optimize")
         val DEFAULT_STYLE = stringPreferencesKey("default_style")
         val DEFAULT_INTENSITY = intPreferencesKey("default_intensity")
@@ -72,6 +73,7 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs[Keys.REQUIRE_WIFI] = s.requireWifi
             prefs[Keys.RUN_IN_BACKGROUND] = s.runInBackground
             prefs[Keys.PROGRESS_NOTIFICATIONS] = s.progressNotifications
+            prefs[Keys.QUEUE_PAUSED] = s.queuePaused
             prefs[Keys.AUTO_OPTIMIZE] = s.autoOptimizePrompt
             prefs[Keys.DEFAULT_STYLE] = s.defaultStyle
             prefs[Keys.DEFAULT_INTENSITY] = s.defaultIntensity
@@ -100,6 +102,7 @@ class SettingsRepositoryImpl @Inject constructor(
             requireWifi = this[Keys.REQUIRE_WIFI] ?: d.requireWifi,
             runInBackground = this[Keys.RUN_IN_BACKGROUND] ?: d.runInBackground,
             progressNotifications = this[Keys.PROGRESS_NOTIFICATIONS] ?: d.progressNotifications,
+            queuePaused = this[Keys.QUEUE_PAUSED] ?: d.queuePaused,
             autoOptimizePrompt = this[Keys.AUTO_OPTIMIZE] ?: d.autoOptimizePrompt,
             defaultStyle = this[Keys.DEFAULT_STYLE] ?: d.defaultStyle,
             defaultIntensity = this[Keys.DEFAULT_INTENSITY] ?: d.defaultIntensity,

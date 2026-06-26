@@ -67,6 +67,9 @@ data class AiSettings(
     val runInBackground: Boolean = false,
     val progressNotifications: Boolean = true,
 
+    // Queue control (persisted so a paused queue stays paused across restarts)
+    val queuePaused: Boolean = false,
+
     // Prompt behaviour
     val autoOptimizePrompt: Boolean = true,
     val defaultStyle: String = StylePreset.REALISTIC.id,
