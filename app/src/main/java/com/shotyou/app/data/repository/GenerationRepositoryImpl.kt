@@ -60,7 +60,7 @@ class GenerationRepositoryImpl @Inject constructor(
             prompt = prompt,
             referenceUris = referenceUris,
             status = JobStatus.QUEUED,
-            provider = settings.imageProvider.name,
+            provider = providerLabel(settings.apiBaseUrl),
             model = settings.imageModel,
             createdAtMs = now,
             updatedAtMs = now,
@@ -111,3 +111,7 @@ class GenerationRepositoryImpl @Inject constructor(
 
     private fun workName(id: String) = "gen-$id"
 }
+
+/** A short, human-readable label for the configured endpoint (its host), for usage records. */
+internal fun providerLabel(apiBaseUrl: String): String =
+    runCatching { java.net.URI(apiBaseUrl).host }.getOrNull()?.takeIf { it.isNotBlank() } ?: "openai"

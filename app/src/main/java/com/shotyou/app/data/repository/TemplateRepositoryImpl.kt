@@ -56,7 +56,7 @@ class TemplateRepositoryImpl @Inject constructor(
         )
         usageRepository.record(
             UsageRecord(
-                provider = settings.llmProvider.name,
+                provider = providerLabel(settings.apiBaseUrl),
                 model = provider.model,
                 operation = AiOperation.PROMPT_OPTIMIZE,
                 promptTokens = result.usage.promptTokens,
