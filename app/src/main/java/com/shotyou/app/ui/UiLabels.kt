@@ -25,6 +25,21 @@ fun aspectLabelRes(aspect: String): Int = when (aspect) {
     else -> R.string.aspect_hair
 }
 
+/**
+ * Localized label for a coarse photo-group category id (the id stays English:
+ * "people" / "scenery" / "food" / "animal" / "object" / "other"). Unknown or null
+ * falls back to "Other".
+ */
+@StringRes
+fun categoryLabelRes(category: String?): Int = when (category?.trim()?.lowercase()) {
+    "people" -> R.string.category_people
+    "scenery" -> R.string.category_scenery
+    "food" -> R.string.category_food
+    "animal" -> R.string.category_animal
+    "object" -> R.string.category_object
+    else -> R.string.category_other
+}
+
 /** Localized label for a usage-dashboard [AiOperation]. */
 @StringRes
 fun AiOperation.labelRes(): Int = when (this) {

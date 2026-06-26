@@ -40,6 +40,28 @@
         <item quantity="one">%d photo</item>
         <item quantity="other">%d photos</item>
     </plurals>
+    <!-- Curation -->
+    <string name="groups_curate_title">Review groups</string>
+    <string name="groups_curate_subtitle">Pick the groups worth generating. Uncheck anything you want to skip.</string>
+    <string name="groups_include_cd">Include this group</string>
+    <string name="groups_recommended">Recommended</string>
+    <string name="groups_not_recommended">Maybe skip</string>
+    <string name="groups_hint_label">Prompt hint</string>
+    <string name="groups_hint_placeholder">Describe the shot you want for this group</string>
+    <string name="groups_zoom_cd">View photos full screen</string>
+    <string name="groups_viewer_count">%1$d / %2$d</string>
+    <string name="groups_viewer_close_cd">Close</string>
+    <string name="groups_start">Start (%1$d)</string>
+    <string name="groups_start_none">Select at least one group</string>
+    <string name="groups_starting">Starting…</string>
+    <string name="groups_start_error">Could not start generation</string>
+    <!-- Photo categories -->
+    <string name="category_people">People</string>
+    <string name="category_scenery">Scenery</string>
+    <string name="category_food">Food</string>
+    <string name="category_animal">Animal</string>
+    <string name="category_object">Object</string>
+    <string name="category_other">Other</string>
 
     <!-- Generate -->
     <string name="generate_title">Generate</string>
@@ -198,6 +220,12 @@
     <string name="settings_section_generation">Generation defaults</string>
     <string name="settings_default_style">Default style</string>
     <string name="settings_default_intensity">Default intensity</string>
+
+    <string name="settings_section_classification">Classification</string>
+    <string name="settings_vlm_batch_size">Photos per batch</string>
+    <string name="settings_vlm_batch_size_desc">How many photos the model reviews at once when grouping.</string>
+    <string name="settings_candidates_per_item">Candidates per group</string>
+    <string name="settings_candidates_per_item_desc">How many variants to generate for each chosen group.</string>
 
     <string name="settings_section_pricing">Pricing</string>
     <string name="settings_price_per_image">Price per image</string>

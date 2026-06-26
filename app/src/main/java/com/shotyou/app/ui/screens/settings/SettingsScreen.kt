@@ -155,7 +155,40 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 }
             }
 
-            // 3. Pricing
+            // 3. Classification
+            item { SettingsSectionHeader(stringResource(R.string.settings_section_classification)) }
+            item {
+                SettingsCard {
+                    SliderRow(
+                        title = stringResource(R.string.settings_vlm_batch_size),
+                        value = settings.vlmBatchSize.toFloat(),
+                        valueLabel = settings.vlmBatchSize.toString(),
+                        range = 4f..40f,
+                        steps = 35,
+                        onValueChange = { v -> viewModel.update { it.copy(vlmBatchSize = v.toInt()) } },
+                    )
+                    Text(
+                        stringResource(R.string.settings_vlm_batch_size_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        stringResource(R.string.settings_candidates_per_item),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    CandidatesSelector(
+                        value = settings.candidatesPerItem,
+                        onSelect = { n -> viewModel.update { it.copy(candidatesPerItem = n) } },
+                    )
+                    Text(
+                        stringResource(R.string.settings_candidates_per_item_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            // 4. Pricing
             item { SettingsSectionHeader(stringResource(R.string.settings_section_pricing)) }
             item {
                 SettingsCard {
@@ -335,6 +368,23 @@ private fun StyleChips(selectedId: String, onSelect: (String) -> Unit) {
                 onClick = { onSelect(preset.id) },
                 label = { Text(stringResource(preset.labelRes())) },
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CandidatesSelector(value: Int, onSelect: (Int) -> Unit) {
+    val options = listOf(1, 2, 3)
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, n ->
+            SegmentedButton(
+                selected = value == n,
+                onClick = { onSelect(n) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+            ) {
+                Text(n.toString())
+            }
         }
     }
 }

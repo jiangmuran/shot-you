@@ -100,7 +100,9 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
             }
             composable(Routes.GROUPS) {
                 GroupsScreen(
-                    onOpenGroup = { navController.navigate(Routes.GENERATE) },
+                    onStarted = {
+                        navController.navigate(Routes.QUEUE) { popUpTo(Routes.LIBRARY) }
+                    },
                     onBack = { navController.popBackStack() },
                 )
             }

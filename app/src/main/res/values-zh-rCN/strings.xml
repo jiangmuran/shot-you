@@ -39,6 +39,28 @@
     <plurals name="groups_photo_count">
         <item quantity="other">%d 张照片</item>
     </plurals>
+    <!-- Curation -->
+    <string name="groups_curate_title">挑选分组</string>
+    <string name="groups_curate_subtitle">选择值得生成的分组，取消勾选你想跳过的。</string>
+    <string name="groups_include_cd">包含此分组</string>
+    <string name="groups_recommended">推荐</string>
+    <string name="groups_not_recommended">建议跳过</string>
+    <string name="groups_hint_label">提示词</string>
+    <string name="groups_hint_placeholder">描述你想为这组生成的画面</string>
+    <string name="groups_zoom_cd">全屏查看照片</string>
+    <string name="groups_viewer_count">%1$d / %2$d</string>
+    <string name="groups_viewer_close_cd">关闭</string>
+    <string name="groups_start">开始 (%1$d)</string>
+    <string name="groups_start_none">请至少选择一个分组</string>
+    <string name="groups_starting">正在开始…</string>
+    <string name="groups_start_error">无法开始生成</string>
+    <!-- Photo categories -->
+    <string name="category_people">人物</string>
+    <string name="category_scenery">风景</string>
+    <string name="category_food">美食</string>
+    <string name="category_animal">动物</string>
+    <string name="category_object">物品</string>
+    <string name="category_other">其他</string>
 
     <!-- Generate -->
     <string name="generate_title">生成</string>
@@ -197,6 +219,12 @@
     <string name="settings_section_generation">生成默认值</string>
     <string name="settings_default_style">默认风格</string>
     <string name="settings_default_intensity">默认强度</string>
+
+    <string name="settings_section_classification">分类</string>
+    <string name="settings_vlm_batch_size">每批照片数</string>
+    <string name="settings_vlm_batch_size_desc">分组时模型每次查看的照片数量。</string>
+    <string name="settings_candidates_per_item">每组候选数</string>
+    <string name="settings_candidates_per_item_desc">为每个选中的分组生成多少个候选。</string>
 
     <string name="settings_section_pricing">价格</string>
     <string name="settings_price_per_image">每张图片价格</string>
