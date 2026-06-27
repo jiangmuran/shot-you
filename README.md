@@ -27,15 +27,20 @@ three of them. Normally you scroll, pinch-zoom, agonise, and keep one mediocre f
 
 **Shot You** does the thinking for you:
 
-1. **Select a big batch** of photos from your gallery.
-2. A **Vision-Language Model** clusters the near-duplicates (burst / same subject / same
-   scene) and explains *why* each group belongs together.
-3. It nominates the **strongest reference frames** from each cluster.
-4. You add a **template prompt** — pick one from your library, or write a line and let an
-   LLM **refine** it. Hair, expression, pose, position… all adjustable.
-5. An **image model fuses** the references + prompt into one polished photo.
-6. Not perfect? **Regenerate.** Everything runs through a **background queue** so the app
-   stays buttery, and a **usage dashboard** tracks every call.
+1. **Select a big batch** of photos (tap, or press-and-drag to sweep-select) and hit
+   **Classify with AI**.
+2. Classification runs **in the background** (a sliding window over a Vision-Language
+   Model, processed concurrently) and lands in the **Queue** as a *session* — you can keep
+   using your phone; progress shows in the status bar.
+3. When it's **ready**, open the session to **curate**: each group shows its category and a
+   "worth generating?" suggestion (so redundant shots are pre-unchecked to save cost). Tap
+   to zoom, edit the prompt, check the ones you want, **Start**.
+4. Each chosen group generates **three candidates** — *conservative · balanced · bold* —
+   the references are actually fed to the image model (`images/edits`).
+5. **Swipe** through the candidates, keep any, ask for changes to iterate, then optionally
+   **move the originals to the recycle bin**.
+6. A **usage dashboard** tracks every call (with your own per-million pricing), and a
+   **pausable** queue keeps everything unobtrusive.
 
 ---
 
@@ -43,17 +48,17 @@ three of them. Normally you scroll, pinch-zoom, agonise, and keep one mediocre f
 
 | | |
 |---|---|
-| **Full album access** | Modern Photo Picker + media permissions, incl. Android 14 *partial* (user-selected) access, with graceful fallbacks down to Android 8. |
-| **Smart grouping** | VLM clusters visually-similar shots and returns a title + reason + reference picks per group. |
-| **Reference selection** | The best frames of each group are pre-selected and fully editable. |
-| **Prompt fusion** | Saved template library (with built-ins) + one-tap **LLM prompt optimization**; quick-insert chips for hair / expression / pose / position. |
-| **Generation & regenerate** | One fused image from references + prompt; regenerate until you're happy; auto-saved to your gallery; share sheet. |
-| **Background queue** | WorkManager-driven job queue with configurable **concurrency**, **request pacing**, retries and Wi-Fi-only mode — fully unobtrusive. |
-| **Usage dashboard** | Call counts by provider & operation, token totals, image count and estimated cost. |
-| **Style & intensity** | Realistic / Beautify / Cinematic / Fresh / Artistic presets + an intensity slider; configurable defaults. Prompts tuned for "beautiful but believable" — not the plastic AI look. |
+| **Full album access** | Modern Photo Picker + media permissions, incl. Android 14 *partial* access; press-and-drag sweep selection; already-processed photos are marked. |
+| **Background classification** | Sliding-window VLM clustering (configurable batch size) run **concurrently with retry** — large selections never freeze the UI. Returns a category + "worth generating?" hint per group. |
+| **Staged queue** | Sessions move through *Classifying → Ready for review → Generating*, visible in the Queue with live status-bar progress; **pause / resume**; auto-retry. |
+| **Curate before you spend** | Review groups, zoom in, edit the prompt, uncheck redundant ones (pre-unchecked from the VLM's suggestion) before generating. |
+| **3 candidates** | Each group yields *conservative / balanced / bold* versions with distinct prompts; references are fed via `images/edits`; output aspect ratio matches the source. Swipe to pick, ask-for-changes to iterate. |
+| **Per-category styles** | Map each category (people / scenery / food / …) to a style preset; plus Realistic / Beautify / Cinematic / Fresh / Artistic + intensity. Prompts tuned for "beautiful but believable". |
+| **Originals cleanup** | Move the rest to the system **recycle bin** (recoverable), or keep one. |
 | **Bring-your-own AI** | Any **OpenAI-compatible** endpoint with a **custom API host** (official / proxy / local). Per-million token pricing for the cost dashboard. Keys stored **on-device**, no backend. |
-| **Bilingual** | In-app switch between English / 简体中文 / system. |
-| **Modern UI** | Jetpack Compose, **Material 3**, dynamic color, edge-to-edge, dark mode. |
+| **Keep-alive** | Foreground-service generation + status-bar progress; optional **root** Doze-whitelist (low battery impact). |
+| **Bilingual** | In-app switch between English / 简体中文 / system; prompts follow your language. |
+| **Modern UI** | Jetpack Compose, **Material 3**, a curated teal palette, pinch-to-zoom, edge-to-edge, dark mode. |
 
 ---
 
@@ -104,11 +109,14 @@ Open **Settings** and fill in:
 
 Any service implementing the OpenAI `chat/completions` and `images/edits` APIs will work.
 
+> The VLM model must support image input (vision). On a proxy/relay host, make sure the VLM
+> model name you set is a vision-capable one, or classification can't actually see the photos.
+
 ### Use it
-**Library** → multi-select photos (drag to select) → **Group with AI** → review the groups
-→ open one → pick a template / write & optimize a prompt, choose a style & intensity →
-**Generate** (2-3 candidates) → swipe to pick the best, ask for changes, then tidy up the
-originals.
+**Library** → select photos (tap or press-and-drag) → **Classify with AI** (runs in the
+background) → **Queue**: open the session when it's *Ready* → **curate** (uncheck redundant
+groups, zoom, tweak prompts) → **Start** → swipe the three candidates per group, keep / ask
+for changes, then move the leftover originals to the recycle bin.
 
 ---
 
@@ -127,8 +135,8 @@ every push.
 
 ## Roadmap
 
-- [ ] Fully automatic pipeline: classify everything, per-category style rules, one tap to start
-- [ ] Foreground-service queue with live status-bar progress, pause / resume
+- [x] Background classification sessions with a staged, pausable queue + status-bar progress
+- [x] Per-category style rules; 3 candidates (conservative/balanced/bold); move-to-recycle-bin
 - [ ] Side-by-side before/after compare on the result screen
 - [ ] On-device pre-clustering (perceptual hash) to cut VLM cost on huge batches
 - [ ] Inpainting / targeted edits ("just fix the eyes")
