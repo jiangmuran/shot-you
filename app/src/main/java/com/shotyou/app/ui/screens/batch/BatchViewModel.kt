@@ -8,7 +8,6 @@ import com.shotyou.app.domain.model.JobStatus
 import com.shotyou.app.domain.repository.DeleteOutcome
 import com.shotyou.app.domain.repository.GenerationRepository
 import com.shotyou.app.domain.repository.PhotoRepository
-import com.shotyou.app.domain.session.SessionStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +34,6 @@ data class BatchUiState(
 class BatchViewModel @Inject constructor(
     private val generationRepository: GenerationRepository,
     private val photoRepository: PhotoRepository,
-    private val sessionStore: SessionStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BatchUiState())
@@ -46,13 +44,21 @@ class BatchViewModel @Inject constructor(
     fun load(batchId: String) {
         if (loaded) return
         loaded = true
-        // Original photos come from the group the user is working on.
-        val group = sessionStore.activeGroup.value
-        _uiState.update { it.copy(originalUris = group?.photoUris.orEmpty(), groupTitle = group?.title) }
         viewModelScope.launch {
             generationRepository.observeBatch(batchId).collect { jobs ->
                 val ordered = jobs.sortedBy { it.variantIndex }
-                _uiState.update { it.copy(jobs = ordered, candidateRevision = ordered.size) }
+                // The "originals" to optionally clean up are the source photos fed into this
+                // batch (the references) — derived from the batch itself, not transient state.
+                val originals = jobs.flatMap { it.referenceUris }.distinct()
+                val title = jobs.firstOrNull { !it.groupTitle.isNullOrBlank() }?.groupTitle
+                _uiState.update {
+                    it.copy(
+                        jobs = ordered,
+                        originalUris = originals,
+                        groupTitle = title,
+                        candidateRevision = ordered.size,
+                    )
+                }
             }
         }
     }

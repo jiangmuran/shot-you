@@ -65,17 +65,24 @@ class GenerationNotifications(private val context: Context) {
             .build()
     }
 
-    /** Post (or update) the ongoing progress notification. */
-    fun notifyProgress() = post(NOTIF_ID, buildProgress())
+    /** Post (or update) the ongoing per-job progress notification under [id]. */
+    fun notifyProgress(id: Int) = post(id, buildProgress())
 
-    /** Post a success message under a SEPARATE id so it survives the foreground-service
-     *  teardown (which cancels [NOTIF_ID]). */
-    fun notifySuccess() =
-        post(TERMINAL_ID, buildTerminal(R.string.notif_success_title, R.string.notif_success_text))
+    /** Post a per-job terminal (success/failure) notification under [id]. */
+    fun notifyTerminal(id: Int, success: Boolean) = post(
+        id,
+        if (success) buildTerminal(R.string.notif_success_title, R.string.notif_success_text)
+        else buildTerminal(R.string.notif_failed_title, R.string.notif_failed_text),
+    )
 
-    /** Post a failure message under the separate terminal id. */
-    fun notifyFailure() =
-        post(TERMINAL_ID, buildTerminal(R.string.notif_failed_title, R.string.notif_failed_text))
+    /** Cancel a per-job notification (e.g. the ongoing progress when the job finishes). */
+    fun cancel(id: Int) {
+        try {
+            NotificationManagerCompat.from(context).cancel(id)
+        } catch (_: SecurityException) {
+            // No notification permission; ignore.
+        }
+    }
 
     /**
      * Post (or update) an ongoing overall queue-progress notification under a distinct id, e.g.

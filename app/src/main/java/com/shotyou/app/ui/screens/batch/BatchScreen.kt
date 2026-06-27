@@ -352,7 +352,8 @@ private fun ActionsSection(
     onAsk: (String) -> Unit,
 ) {
     val ready = current?.status == JobStatus.SUCCEEDED && current.resultUri != null
-    var suggestion by remember { mutableStateOf("") }
+    // Reset the suggestion when the user swipes to a different candidate.
+    var suggestion by remember(current?.id) { mutableStateOf("") }
 
     Row(
         modifier = Modifier

@@ -77,9 +77,9 @@ class GroupsViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GroupsUiState())
 
     fun toggleIncluded(groupId: String) = overrides.update { map ->
-        val group = groups.value.firstOrNull { it.id == groupId } ?: return@update map
         val current = map[groupId]
-        val now = current?.included ?: group.recommended
+        // Must match the display default (CHECKED) so a single tap actually toggles.
+        val now = current?.included ?: true
         map + (groupId to (current ?: GroupOverride()).copy(included = !now))
     }
 

@@ -178,7 +178,7 @@ private fun GroupCard(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         AssistChip(
-                            onClick = { onToggle() },
+                            onClick = {}, // informational label, not a selection control
                             label = { Text(stringResource(categoryLabelRes(group.category))) },
                         )
                         Text(

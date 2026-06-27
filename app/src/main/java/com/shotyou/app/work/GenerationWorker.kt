@@ -71,7 +71,7 @@ class GenerationWorker @AssistedInject constructor(
         if (foreground) {
             runCatching { setForeground(getForegroundInfo()) }
         } else if (settings.progressNotifications) {
-            runCatching { notifications.notifyProgress() }
+            runCatching { notifications.notifyProgress(progressId()) }
         }
         // Either flag means we post a terminal notification when the job finishes.
         val notify = foreground || settings.progressNotifications
@@ -98,20 +98,31 @@ class GenerationWorker @AssistedInject constructor(
                     updatedAtMs = now,
                 ).toEntity(),
             )
-            usageRepository.record(
-                UsageRecord(
-                    provider = job.provider,
-                    model = provider.model,
-                    operation = AiOperation.IMAGE_GENERATION,
-                    imageCount = 1,
-                    estimatedCostUsd = result.usage.estimatedCostUsd,
-                    success = true,
-                    timestampMs = now,
-                ),
-            )
-            if (notify) runCatching { notifications.notifySuccess() }
+            // Guard: the job is already SUCCEEDED + saved; a failure to record usage must
+            // NOT fall through to the catch block (which would retry → duplicate image).
+            runCatching {
+                usageRepository.record(
+                    UsageRecord(
+                        provider = job.provider,
+                        model = provider.model,
+                        operation = AiOperation.IMAGE_GENERATION,
+                        promptTokens = result.usage.promptTokens,
+                        completionTokens = result.usage.completionTokens,
+                        imageCount = 1,
+                        estimatedCostUsd = result.usage.estimatedCostUsd,
+                        success = true,
+                        timestampMs = now,
+                    ),
+                )
+            }
+            if (notify) runCatching {
+                notifications.cancel(progressId())
+                notifications.notifyTerminal(terminalId(), success = true)
+            }
             if (settings.progressNotifications) updateQueueProgress()
             Result.success()
+        } catch (c: CancellationException) {
+            throw c // never treat cancellation as a failure (would leave the job stuck RUNNING)
         } catch (t: Throwable) {
             if (settings.autoRetryOnFailure && runAttemptCount < settings.maxRetries) {
                 jobDao.update(
@@ -121,6 +132,7 @@ class GenerationWorker @AssistedInject constructor(
                         updatedAtMs = clock.now(),
                     ).toEntity(),
                 )
+                if (settings.progressNotifications) updateQueueProgress()
                 // Not terminal yet — the next attempt will re-surface progress.
                 Result.retry()
             } else {
@@ -145,7 +157,10 @@ class GenerationWorker @AssistedInject constructor(
                         ),
                     )
                 }
-                if (notify) runCatching { notifications.notifyFailure() }
+                if (notify) runCatching {
+                    notifications.cancel(progressId())
+                    notifications.notifyTerminal(terminalId(), success = false)
+                }
                 if (settings.progressNotifications) updateQueueProgress()
                 Result.failure()
             }
@@ -183,16 +198,21 @@ class GenerationWorker @AssistedInject constructor(
      */
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val notification = notifications.buildProgress()
+        val id = progressId()
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ForegroundInfo(
-                GenerationNotifications.NOTIF_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
-            )
+            ForegroundInfo(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         } else {
-            ForegroundInfo(GenerationNotifications.NOTIF_ID, notification)
+            ForegroundInfo(id, notification)
         }
     }
+
+    // Per-job notification ids so concurrent jobs (e.g. a 3-candidate batch) don't share /
+    // overwrite each other's progress + result notifications.
+    private fun progressId(): Int =
+        4300 + (inputData.getString(KEY_JOB_ID).orEmpty().hashCode() and 0x0FFF)
+
+    private fun terminalId(): Int =
+        12000 + (inputData.getString(KEY_JOB_ID).orEmpty().hashCode() and 0x0FFF)
 
     /** Map the reference image's orientation to a supported gpt-image output size. */
     private fun outputSizeFor(bytes: ByteArray): String {
