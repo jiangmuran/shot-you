@@ -4,72 +4,123 @@
 
 # Shot You
 
-### 拍一堆,让 AI 帮你留最好的那张。
+### 尽管拍。让 AI 替你留下唯一值得留的那张。
 
-*你随手连拍了五十张几乎一样的照片。Shot You 找出这些近似图、理解它们,再把每组里最好的部分融合成一张完美的照片。*
+你随手连拍了五十张几乎一样的照片,最后只留下平庸的一张。
+**Shot You** 读懂整组连拍,把该归到一起的归到一起,再把每组里最好的部分融合成一张
+**自然、好看、看不出是 AI** 的照片——全程自带 Key、端上直连,无需后端。
 
 [![Android CI](https://github.com/jiangmuran/shot-you/actions/workflows/build.yml/badge.svg)](https://github.com/jiangmuran/shot-you/actions/workflows/build.yml)
+[![Release](https://github.com/jiangmuran/shot-you/actions/workflows/release.yml/badge.svg)](https://github.com/jiangmuran/shot-you/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/jiangmuran/shot-you?sort=semver)](https://github.com/jiangmuran/shot-you/releases)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.0-7F52FF?logo=kotlin&logoColor=white)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
-![minSdk](https://img.shields.io/badge/minSdk-26-3DDC84?logo=android&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![minSdk 26](https://img.shields.io/badge/minSdk-26-3DDC84?logo=android&logoColor=white)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+
+[下载 APK](https://github.com/jiangmuran/shot-you/releases/latest) ·
+[反馈问题](https://github.com/jiangmuran/shot-you/issues) ·
+[English](README.md)
 
 </div>
 
 ---
 
-## 它能做什么
+## 痛点
 
-你拍了一组连拍 —— 同一个人、同一个地方、姿势略有不同,其中三张还闭着眼。平时你得来回滑动、放大纠结,最后只留下一张平庸的。
+手机拍二十张同一个瞬间很容易,挑出最好的那张却很痛苦:近似图来回滑、总有人眨眼、
+姿势好的背景差,最后只能将就。其实每张照片都是有用的素材——只是没人有耐心去组合它们。
 
-**Shot You** 替你来想:
+## Shot You 怎么做
 
-1. 从相册**批量选中**(点选,或按住拖动批量刷选),点**用 AI 分类**。
-2. 分类在**后台**进行(对 VLM 做滑动窗口、并发处理),作为一个*会话*进入**队列**——你可以继续用手机,进度显示在状态栏。
-3. **就绪**后进会话**策展**:每组显示分类与"是否值得生成"的建议(冗余的组默认不勾,省钱);可放大、改提示词、勾选你要的,点**开始**。
-4. 每个选中的组生成**三个候选**——*保守 · 中立 · 大胆*——参考图会真正喂给图像模型(`images/edits`)。
-5. **滑动**比选候选,保留任意张、提建议迭代,然后可选把其余原图**移到回收站**。
-6. **用量看板**按你自己设的(每百万 token)单价统计每次调用;队列可**暂停**,全程无感。
+```
+   你的相册              端上处理               后台(用你的 AI Key)              你来决定
+ ────────────       ────────────────        ───────────────────────────      ─────────────────
+  点选/拖动批量   →   缩放 + 分批           →   VLM 聚类近似图、打分类、       →   策展:保留、
+  选一堆照片          (滑动窗口,不卡 UI)      建议哪些值得生成                   取消冗余、放大、
+                                                       │                          改提示词
+                                                       ▼
+                                          每个保留的组生成 3 个候选
+                                          (保守 / 中立 / 大胆)——          →   滑动比选、保留、
+                                          参考图通过 images/edits              提建议迭代、
+                                          真正喂给模型                          其余移入回收站
+```
+
+分类和生成都是**后台会话**,在可暂停/继续的队列里运行,进度显示在状态栏——它干活时你照样拍。
 
 ---
 
-## 功能
+## 亮点
 
 | | |
 |---|---|
-| **完整相册权限** | 现代 Photo Picker + 媒体权限,含 Android 14 的*部分(仅选定照片)*访问,并向下兼容到 Android 8。 |
-| **智能分组** | VLM 聚类近似照片,给出每组的标题、理由和参考图建议。 |
-| **参考图挑选** | 每组的最佳帧默认选中,可手动增删。 |
-| **提示词融合** | 模板库(含内置)+ 一键**大模型优化**;发型 / 表情 / 姿势 / 位置 快捷词。 |
-| **风格与强度** | 真实 / 美化 / 电影感 / 清新 / 艺术 等风格预设 + 强度滑块;默认风格可在设置里配置。 |
-| **生成与重生成** | 参考图 + 提示词融合出图;不满意可在结果页提建议迭代;自动存相册、可分享。 |
-| **后台队列 / 常驻** | WorkManager 队列,可配并发、请求间隔、重试、仅 Wi-Fi;可选**后台常驻 + 进度通知**。 |
-| **用量看板** | 按调用类型统计调用数、token、图片数与估算费用。 |
-| **自带 Key,OpenAI 兼容** | 兼容任意 **OpenAI 格式**接口,**API host 可自定义**(官方 / 中转 / 本地模型皆可)。Key 仅存本地,无需后端。 |
-| **中英文切换** | 应用内一键切换 简体中文 / English / 跟随系统。 |
-| **现代 UI** | Jetpack Compose、**Material 3**、动态取色、edge-to-edge、深色模式。 |
+| **永不卡死** | 分类是对 VLM 的滑动窗口、**并发 + 重试**;几百张也不卡,进度在分阶段队列和状态栏。 |
+| **花钱花在刀刃上** | VLM 给每组打**分类**和**是否值得生成**的建议,冗余组在你付费生成前就被标出。先策展、放大、改词。 |
+| **有据可依的生成** | 参考图通过 `images/edits` **真正发给模型**,结果忠于真实主体而非瞎编;画幅自动匹配原图方向。 |
+| **三版任你选** | 每组产出**保守 / 中立 / 大胆**三个候选,提示词差异明显。滑动对比、任意保留,或**提建议**迭代。 |
+| **美而可信** | 提示词由"专业人像摄影师"人设打磨:真实构图、光线与肤质,刻意避开塑料"AI 感"。 |
+| **按分类配置风格** | 人物→人像、风景→旅行……每类可指定风格;另有 真实/美化/电影感/清新/艺术 预设 + 强度滑块。 |
+| **自带 Key,OpenAI 兼容** | 任意 **OpenAI 格式**接口 + **自定义 API host**(官方/中转/本地)。Key 仅存本地,无后端。 |
+| **真实用量统计** | 用量看板按你设的每百万 token / 每张图单价,统计调用数、token、图片数与预估花费。 |
+| **温和保活** | 前台服务生成 + 状态栏进度;可选 **root** Doze 白名单,几乎不耗电。 |
+| **安全可恢复** | 原图移入系统**回收站**(可恢复),绝不硬删。完整相册权限,含 Android 14 部分选择。 |
+| **精致** | Compose + Material 3、考究配色、双指缩放、edge-to-edge、深色模式;应用内中英文,提示词跟随语言。 |
 
 ---
 
-## 快速开始
+## 使用流程
+
+1. 在相册**选图**——点选或按住拖动批量刷选,点**用 AI 分类**;已处理的照片会被标记。
+2. 分类在**后台**进行;该会话出现在**队列**里,经历 *分类中 → 待决策 → 生成中*,状态栏实时显示进度。
+3. 打开**就绪**的会话**策展**:每组显示分类、缩略图、是否建议跳过、可编辑提示词。放大查看、取消不想要的,点**开始**。
+4. 每个保留的组生成**三个候选**。进去**滑动**比选,保留喜欢的,或**提建议**从当前版本迭代出新候选。
+5. 最后把**多余的原图移入回收站**——或只保留一张。
+
+---
+
+## 架构
+
+单模块、清晰 MVVM,按层划分:
+
+```
+ui/         Compose 界面 + ViewModel(相册、队列、策展、候选、结果、模板、用量、设置)+ 导航 + 主题
+domain/     模型、仓库接口、AI 契约、PromptComposer、会话
+data/
+  local/    Room(模板/任务/用量/会话)+ 迁移
+  remote/   OpenAI 兼容客户端(视觉对话、images/edits)、AiProviderFactory
+  repository/  仓库实现
+  settings/ DataStore 设置
+work/       WorkManager:ClassificationWorker + GenerationWorker(前台)
+di/         Hilt 模块
+```
+
+- **Hilt** 依赖注入,**Room** + **DataStore** 持久化,**WorkManager** 跑后台会话,
+  **Retrofit/OkHttp** + **kotlinx.serialization** 网络,**Coil** 图片。
+- AI 层抽象在 `VlmProvider` / `LlmProvider` / `ImageGenProvider` + `AiProviderFactory` 之后,新增提供商只需一个类。
+- **滑动窗口 + 并查集合并**:大批量照片既不超模型单次上限,也不会把一组拆到两次请求。
+
+> **开放式构建,由一队 agent 完成。** 先打地基与契约,再在隔离的 git worktree 里并行开发、
+> 合并,全程以 GitHub Actions 作为构建闸门,并在版本之间用对抗式审查找 bug。提交历史就是构建日志。
+
+---
+
+## 开始使用
 
 ### 安装
-到 [Releases](https://github.com/jiangmuran/shot-you/releases) 下载最新的 **`shot-you-*.apk`** 安装即可
+到 [Releases](https://github.com/jiangmuran/shot-you/releases/latest) 下载最新 **APK** 安装
 (也可从 [CI 产物](https://github.com/jiangmuran/shot-you/actions) 下载)。
 
-### 配置接口
-打开 **设置**,填入:
+### 接上你的 AI
+打开**设置**填写:
 
-- **API Host** —— 默认 `https://api.openai.com/v1`,可改成任意 OpenAI 兼容地址(中转 / 自建 / 本地)。
-- **API Key** —— 仅存本地,不上传。
-- **模型名** —— 分别配置 VLM(分组)、LLM(提示词优化)、图像 三个模型。
+- **API Host**——默认 `https://api.openai.com/v1`,可改成任意 OpenAI 兼容地址(官方/中转/本地)。
+- **API Key**——仅存本地。
+- **模型**——VLM(分类)、LLM(提示词优化)、图像 分别配置(默认 `gpt-4o`、`gpt-4o-mini`、`gpt-image-2`)。
+- 可选:**单价**(每百万 token / 每张图)、**按分类风格**、队列并发与节流、保活、语言。
 
-> 任何兼容 OpenAI `chat/completions` 与 `images/generations` 协议的服务都能接入。
-
-> VLM 模型必须支持图片输入(视觉)。用中转/自建 host 时,务必把 VLM 模型名设成支持视觉的型号,否则分类阶段根本"看不到"照片(会出现猫被认成人之类的瞎编)。
-
-### 使用
-**相册** → 选图(点选或按住拖动)→ **用 AI 分类**(后台进行)→ **队列**:会话*就绪*后点进去 → **策展**(取消勾选冗余组、放大、改提示词)→ **开始** → 滑动比选每组的三个候选,保留 / 提建议迭代,再把多余原图移到回收站。
+> VLM 模型必须支持**图片输入(视觉)**。用中转 host 时,务必把 VLM 模型名设成支持视觉的型号,
+> 否则分类阶段"看不到"照片,会出现猫被认成人之类的瞎编。任何实现 OpenAI `chat/completions`
+> 与 `images/edits` 的服务都能接入。
 
 ---
 
@@ -78,12 +129,23 @@
 ```bash
 git clone https://github.com/jiangmuran/shot-you.git
 cd shot-you
-./gradlew assembleDebug # 产物:app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleDebug    # 产物:app/build/outputs/apk/debug/app-debug.apk
 ```
 
-需要 **JDK 17** 与 Android SDK(**compileSdk 35**)。每次推送 CI 都会自动编译 APK。
+需要 **JDK 17** 与 Android SDK(**compileSdk 35**)。每次推送都会 CI 构建,每个 tag 发布签名 APK。
 
 ---
+
+## 路线图
+
+- [x] 后台分类会话;可暂停的分阶段队列 + 状态栏进度
+- [x] 先策展再花钱;三候选(保守/中立/大胆);回收站
+- [x] 按分类风格规则;OpenAI 兼容自定义 host;中英文;用量 + 单价
+- [ ] 结果页前后对比
+- [ ] 端上感知哈希预聚类,降低大批量的 VLM 成本
+- [ ] 局部重绘 / 定点编辑("只修一下眼睛")
+
+欢迎 issue 与 PR。
 
 ## 许可证
 
