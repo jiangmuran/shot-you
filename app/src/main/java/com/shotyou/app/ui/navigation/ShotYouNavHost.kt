@@ -18,8 +18,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.shotyou.app.ui.screens.batch.BatchScreen
@@ -73,12 +75,15 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
         ) {
             composable(Routes.LIBRARY) {
                 ScreenContainer(padding) {
-                    LibraryScreen(onPhotosGrouped = { navController.navigate(Routes.GROUPS) })
+                    LibraryScreen(onClassificationStarted = { navController.navigateToTab(Routes.QUEUE) })
                 }
             }
             composable(Routes.QUEUE) {
                 ScreenContainer(padding) {
-                    QueueScreen(onOpenTask = { batchId -> navController.navigate(Routes.batch(batchId)) })
+                    QueueScreen(
+                        onOpenTask = { batchId -> navController.navigate(Routes.batch(batchId)) },
+                        onOpenCuration = { sid -> navController.navigate(Routes.groups(sid)) },
+                    )
                 }
             }
             composable(Routes.TEMPLATES) {
@@ -90,7 +95,10 @@ fun ShotYouNavHost(navController: NavHostController = rememberNavController()) {
             composable(Routes.SETTINGS) {
                 ScreenContainer(padding) { SettingsScreen() }
             }
-            composable(Routes.GROUPS) {
+            composable(
+                Routes.GROUPS,
+                arguments = listOf(navArgument("sessionId") { type = NavType.StringType }),
+            ) {
                 GroupsScreen(
                     onStarted = { navController.navigateToTab(Routes.QUEUE) },
                     onBack = { navController.popBackStack() },

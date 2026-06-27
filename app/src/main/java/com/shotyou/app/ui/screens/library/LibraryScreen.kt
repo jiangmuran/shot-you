@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
@@ -32,6 +33,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Button
@@ -84,11 +86,11 @@ import com.shotyou.app.util.PhotoPermissions
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
-    onPhotosGrouped: () -> Unit,
+    onClassificationStarted: () -> Unit,
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val grouped by viewModel.grouped.collectAsStateWithLifecycle()
+    val started by viewModel.classificationStarted.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -106,11 +108,11 @@ fun LibraryScreen(
         viewModel.onPermissionResult(PhotoPermissions.access(context))
     }
 
-    // Navigate once grouping succeeds.
-    LaunchedEffect(grouped) {
-        if (grouped) {
-            viewModel.onGroupedHandled()
-            onPhotosGrouped()
+    // Navigate to the Queue once classification has been enqueued in the background.
+    LaunchedEffect(started) {
+        if (started) {
+            viewModel.onClassificationStartedHandled()
+            onClassificationStarted()
         }
     }
 
@@ -152,9 +154,9 @@ fun LibraryScreen(
                 exit = scaleOut() + fadeOut(),
             ) {
                 ExtendedFloatingActionButton(
-                    text = { Text(stringResource(R.string.library_group_with_ai, state.selectedCount)) },
+                    text = { Text(stringResource(R.string.library_classify_with_ai, state.selectedCount)) },
                     icon = {
-                        if (state.grouping) {
+                        if (state.starting) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp,
@@ -164,8 +166,8 @@ fun LibraryScreen(
                             Icon(Icons.Outlined.Tune, contentDescription = null)
                         }
                     },
-                    onClick = { if (state.canGroup) viewModel.groupSelected() },
-                    containerColor = if (state.canGroup) {
+                    onClick = { if (state.canClassify) viewModel.classifySelected() },
+                    containerColor = if (state.canClassify) {
                         MaterialTheme.colorScheme.primaryContainer
                     } else {
                         MaterialTheme.colorScheme.surfaceVariant
@@ -195,6 +197,7 @@ fun LibraryScreen(
                     PhotoGrid(
                         photos = state.photos,
                         selected = state.selectedUris,
+                        processed = state.processedUris,
                         onToggle = viewModel::toggleSelection,
                         onSetSelection = viewModel::setSelection,
                         showPartialBanner = state.permission == PhotoAccess.PARTIAL,
@@ -202,9 +205,9 @@ fun LibraryScreen(
                     )
             }
 
-            // Hint when only one photo is selected (need >= 2 to group).
+            // Hint when only one photo is selected (need >= 2 to classify).
             AnimatedVisibility(
-                visible = state.selectedCount == 1 && !state.grouping,
+                visible = state.selectedCount == 1 && !state.starting,
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier
@@ -223,15 +226,6 @@ fun LibraryScreen(
                     )
                 }
             }
-
-            // Blocking overlay while grouping.
-            AnimatedVisibility(
-                visible = state.grouping,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                GroupingOverlay()
-            }
         }
     }
 }
@@ -240,6 +234,7 @@ fun LibraryScreen(
 private fun PhotoGrid(
     photos: List<Photo>,
     selected: Set<String>,
+    processed: Set<String>,
     onToggle: (String) -> Unit,
     onSetSelection: (Set<String>) -> Unit,
     showPartialBanner: Boolean,
@@ -340,6 +335,7 @@ private fun PhotoGrid(
             PhotoThumbnail(
                 photo = photo,
                 selected = photo.uri in selected,
+                processed = photo.uri in processed,
                 onToggle = { onToggle(photo.uri) },
             )
         }
@@ -371,14 +367,26 @@ private fun photoIndexAt(
 private fun PhotoThumbnail(
     photo: Photo,
     selected: Boolean,
+    processed: Boolean,
     onToggle: () -> Unit,
 ) {
     val scale by animateFloatAsState(if (selected) 0.86f else 1f, label = "thumbScale")
+    // Subtle "already sent to a session" ring, in a distinct tint from the selection accent.
+    val ringModifier = if (processed && !selected) {
+        Modifier.border(
+            width = 2.dp,
+            color = MaterialTheme.colorScheme.tertiary,
+            shape = RoundedCornerShape(14.dp),
+        )
+    } else {
+        Modifier
+    }
     Box(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
+            .then(ringModifier)
             .clickable { onToggle() },
     ) {
         AsyncImage(
@@ -425,6 +433,27 @@ private fun PhotoThumbnail(
                     contentDescription = stringResource(R.string.library_selected_cd),
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+
+        // "Already processed" badge — distinct tertiary tint, hidden while selected so the
+        // two markers never overlap.
+        if (processed && !selected) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(6.dp)
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.tertiary),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Filled.Done,
+                    contentDescription = stringResource(R.string.library_processed_cd),
+                    tint = MaterialTheme.colorScheme.onTertiary,
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }
@@ -486,42 +515,6 @@ private fun LoadingState() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 16.dp),
             )
-        }
-    }
-}
-
-@Composable
-private fun GroupingOverlay() {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 4.dp,
-        ) {
-            Column(
-                modifier = Modifier.padding(28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                CircularProgressIndicator()
-                Text(
-                    stringResource(R.string.library_grouping_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(top = 18.dp),
-                )
-                Text(
-                    stringResource(R.string.library_grouping_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
         }
     }
 }

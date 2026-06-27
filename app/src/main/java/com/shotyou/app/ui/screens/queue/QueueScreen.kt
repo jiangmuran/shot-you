@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -26,6 +27,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -50,14 +52,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.shotyou.app.R
+import com.shotyou.app.domain.model.GenerationSession
+import com.shotyou.app.domain.model.SessionStage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QueueScreen(
     onOpenTask: (String) -> Unit,
+    onOpenCuration: (String) -> Unit,
     viewModel: QueueViewModel = hiltViewModel(),
 ) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
+    val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val paused by viewModel.paused.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -89,25 +95,40 @@ fun QueueScreen(
             )
         },
     ) { padding ->
-        if (tasks.isEmpty()) {
+        if (sessions.isEmpty() && tasks.isEmpty()) {
             EmptyQueue(padding)
         } else {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                QueueProgressHeader(
-                    done = tasks.sumOf { it.done },
-                    total = tasks.sumOf { it.total },
-                    paused = paused,
-                )
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(tasks, key = { it.batchId }) { task ->
+                if (sessions.isNotEmpty()) {
+                    item(key = "sessions-header") {
+                        SectionHeader(stringResource(R.string.queue_sessions_title))
+                    }
+                    items(sessions, key = { "session-${it.id}" }) { session ->
+                        SessionCard(
+                            session = session,
+                            onOpenCuration = { onOpenCuration(session.id) },
+                            onDelete = { viewModel.deleteSession(session.id) },
+                        )
+                    }
+                }
+                if (tasks.isNotEmpty()) {
+                    item(key = "tasks-header") {
+                        SectionHeader(stringResource(R.string.queue_tasks_title))
+                    }
+                    item(key = "tasks-progress") {
+                        QueueProgressHeader(
+                            done = tasks.sumOf { it.done },
+                            total = tasks.sumOf { it.total },
+                            paused = paused,
+                        )
+                    }
+                    items(tasks, key = { "task-${it.batchId}" }) { task ->
                         TaskCard(task = task, onOpen = { onOpenTask(task.batchId) })
                     }
                 }
@@ -117,11 +138,157 @@ fun QueueScreen(
 }
 
 @Composable
+private fun SectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(top = 4.dp),
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SessionCard(
+    session: GenerationSession,
+    onOpenCuration: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val ready = session.stage == SessionStage.READY_FOR_REVIEW
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (ready) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            },
+        ),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SessionThumbnail(session = session)
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    StageBadge(stage = session.stage)
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = sessionSummary(session),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (session.stage == SessionStage.FAILED) {
+                    IconButton(onClick = onDelete) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.queue_session_dismiss),
+                        )
+                    }
+                }
+            }
+
+            if (ready) {
+                Spacer(Modifier.height(10.dp))
+                FilledTonalButton(
+                    onClick = onOpenCuration,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.queue_session_review))
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SessionThumbnail(session: GenerationSession) {
+    Box(
+        modifier = Modifier
+            .size(64.dp)
+            .clip(RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        session.photoUris.firstOrNull()?.let { uri ->
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(uri)
+                    .size(256)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        if (session.stage == SessionStage.CLASSIFYING || session.stage == SessionStage.GENERATING) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                strokeWidth = 2.dp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun StageBadge(stage: SessionStage) {
+    val labelRes = when (stage) {
+        SessionStage.CLASSIFYING -> R.string.queue_stage_classifying
+        SessionStage.READY_FOR_REVIEW -> R.string.queue_stage_ready
+        SessionStage.GENERATING -> R.string.queue_stage_generating
+        SessionStage.DONE -> R.string.queue_stage_done
+        SessionStage.FAILED -> R.string.queue_stage_failed
+    }
+    AssistChip(
+        onClick = {},
+        enabled = false,
+        label = {
+            Text(stringResource(labelRes), style = MaterialTheme.typography.labelMedium)
+        },
+        colors = AssistChipDefaults.assistChipColors(
+            disabledContainerColor = when (stage) {
+                SessionStage.READY_FOR_REVIEW -> MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                SessionStage.FAILED -> MaterialTheme.colorScheme.error.copy(alpha = 0.14f)
+                else -> MaterialTheme.colorScheme.surfaceVariant
+            },
+            disabledLabelColor = when (stage) {
+                SessionStage.READY_FOR_REVIEW -> MaterialTheme.colorScheme.primary
+                SessionStage.FAILED -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        ),
+        border = null,
+    )
+}
+
+@Composable
+private fun sessionSummary(session: GenerationSession): String = when (session.stage) {
+    SessionStage.CLASSIFYING ->
+        stringResource(R.string.queue_session_classifying, session.photoCount)
+    SessionStage.READY_FOR_REVIEW ->
+        stringResource(R.string.queue_session_ready, session.groupCount)
+    SessionStage.GENERATING ->
+        stringResource(R.string.queue_session_generating)
+    SessionStage.DONE ->
+        stringResource(R.string.queue_session_done, session.groupCount)
+    SessionStage.FAILED ->
+        session.error?.takeIf { it.isNotBlank() }
+            ?: stringResource(R.string.queue_session_failed)
+}
+
+@Composable
 private fun QueueProgressHeader(done: Int, total: Int, paused: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(vertical = 4.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

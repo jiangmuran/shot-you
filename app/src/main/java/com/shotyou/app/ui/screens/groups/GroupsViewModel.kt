@@ -1,5 +1,6 @@
 package com.shotyou.app.ui.screens.groups
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shotyou.app.domain.ai.PromptComposer
@@ -7,13 +8,14 @@ import com.shotyou.app.domain.model.PhotoGroup
 import com.shotyou.app.domain.model.StylePreset
 import com.shotyou.app.domain.repository.GenerationRepository
 import com.shotyou.app.domain.repository.GenerationVariant
+import com.shotyou.app.domain.repository.SessionRepository
 import com.shotyou.app.domain.repository.SettingsRepository
-import com.shotyou.app.domain.session.SessionStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -39,17 +41,28 @@ private data class GroupOverride(val included: Boolean? = null, val hint: String
 
 @HiltViewModel
 class GroupsViewModel @Inject constructor(
-    private val sessionStore: SessionStore,
+    savedStateHandle: SavedStateHandle,
+    private val sessionRepository: SessionRepository,
     private val generationRepository: GenerationRepository,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
+
+    private val sessionId: String = checkNotNull(savedStateHandle["sessionId"]) {
+        "GroupsViewModel requires a sessionId route argument"
+    }
+
+    /** The session's groups, observed from the repository (built by background classification). */
+    private val groups: StateFlow<List<PhotoGroup>> =
+        sessionRepository.observeSession(sessionId)
+            .map { it?.groups ?: emptyList() }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val overrides = MutableStateFlow<Map<String, GroupOverride>>(emptyMap())
     private val starting = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<GroupsUiState> =
-        combine(sessionStore.groups, overrides, starting, error) { groups, ov, isStarting, err ->
+        combine(groups, overrides, starting, error) { groups, ov, isStarting, err ->
             val items = groups.map { group ->
                 val o = ov[group.id]
                 CurationItem(
@@ -62,7 +75,7 @@ class GroupsViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GroupsUiState())
 
     fun toggleIncluded(groupId: String) = overrides.update { map ->
-        val group = sessionStore.groups.value.firstOrNull { it.id == groupId } ?: return@update map
+        val group = groups.value.firstOrNull { it.id == groupId } ?: return@update map
         val current = map[groupId]
         val now = current?.included ?: group.recommended
         map + (groupId to (current ?: GroupOverride()).copy(included = !now))
@@ -74,7 +87,8 @@ class GroupsViewModel @Inject constructor(
 
     fun consumeError() { error.value = null }
 
-    /** Enqueue a batch for every checked group, then navigate to the queue via [onStarted]. */
+    /** Enqueue a batch for every checked group, mark the session GENERATING, then navigate
+     *  to the queue via [onStarted]. */
     fun start(onStarted: () -> Unit) {
         if (starting.value) return
         val chosen = uiState.value.items.filter { it.included }
@@ -102,6 +116,7 @@ class GroupsViewModel @Inject constructor(
                         referenceUris = group.referenceUris.ifEmpty { group.photoUris },
                     )
                 }
+                runCatching { sessionRepository.markGenerating(sessionId) }
                 starting.value = false
                 onStarted()
             } catch (e: Exception) {

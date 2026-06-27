@@ -18,11 +18,12 @@ object Routes {
     const val USAGE = "usage"
     const val SETTINGS = "settings"
 
-    const val GROUPS = "groups"
+    const val GROUPS = "groups/{sessionId}"
     const val GENERATE = "generate"
     const val RESULT = "result/{jobId}"
     const val BATCH = "batch/{batchId}"
 
+    fun groups(sessionId: String) = "groups/$sessionId"
     fun result(jobId: String) = "result/$jobId"
     fun batch(batchId: String) = "batch/$batchId"
 }

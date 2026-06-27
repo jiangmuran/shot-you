@@ -30,6 +30,8 @@
     <string name="library_empty_body">Photos you take will show up here, ready to group and enhance with AI.</string>
     <string name="library_loading">Loading your photos…</string>
     <string name="library_selected_cd">Selected</string>
+    <string name="library_classify_with_ai">Classify %1$d with AI</string>
+    <string name="library_processed_cd">Already processed</string>
 
     <!-- Groups -->
     <string name="groups_title">Groups</string>
@@ -122,6 +124,21 @@
     <string name="queue_task_done_count">%1$d/%2$d done</string>
     <string name="queue_task_failed_count">%1$d failed</string>
     <string name="queue_status_separator"> · </string>
+    <!-- Queue sessions -->
+    <string name="queue_sessions_title">Sessions</string>
+    <string name="queue_tasks_title">Generating</string>
+    <string name="queue_stage_classifying">Classifying</string>
+    <string name="queue_stage_ready">Ready</string>
+    <string name="queue_stage_generating">Generating</string>
+    <string name="queue_stage_done">Done</string>
+    <string name="queue_stage_failed">Failed</string>
+    <string name="queue_session_classifying">Classifying… (%1$d photos)</string>
+    <string name="queue_session_ready">Ready — %1$d groups</string>
+    <string name="queue_session_generating">Generating…</string>
+    <string name="queue_session_done">Done — %1$d groups</string>
+    <string name="queue_session_failed">Classification failed</string>
+    <string name="queue_session_review">Review</string>
+    <string name="queue_session_dismiss">Dismiss</string>
 
     <!-- Result -->
     <string name="result_title">Result</string>

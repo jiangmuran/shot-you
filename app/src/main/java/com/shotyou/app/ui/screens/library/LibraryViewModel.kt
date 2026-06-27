@@ -2,11 +2,9 @@ package com.shotyou.app.ui.screens.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.shotyou.app.domain.ai.AiException
 import com.shotyou.app.domain.model.Photo
-import com.shotyou.app.domain.repository.GroupingRepository
 import com.shotyou.app.domain.repository.PhotoRepository
-import com.shotyou.app.domain.session.SessionStore
+import com.shotyou.app.domain.repository.SessionRepository
 import com.shotyou.app.util.PhotoAccess
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,28 +19,38 @@ data class LibraryUiState(
     val permission: PhotoAccess = PhotoAccess.NONE,
     val photos: List<Photo> = emptyList(),
     val selectedUris: Set<String> = emptySet(),
+    /** Uris already sent to a classification session (for "already processed" marking). */
+    val processedUris: Set<String> = emptySet(),
     val loading: Boolean = false,
-    val grouping: Boolean = false,
+    val starting: Boolean = false,
     val error: String? = null,
 ) {
     val selectedCount: Int get() = selectedUris.size
-    val canGroup: Boolean get() = selectedCount >= 2 && !grouping
+    val canClassify: Boolean get() = selectedCount >= 2 && !starting
     val isEmpty: Boolean get() = !loading && photos.isEmpty()
 }
 
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val photoRepository: PhotoRepository,
-    private val groupingRepository: GroupingRepository,
-    private val sessionStore: SessionStore,
+    private val sessionRepository: SessionRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
-    /** One-shot signal: emit true to trigger navigation after a successful grouping. */
-    private val _grouped = MutableStateFlow(false)
-    val grouped: StateFlow<Boolean> = _grouped.asStateFlow()
+    /** One-shot signal: emit true once a classification session has been enqueued so the
+     *  screen can navigate to the Queue. */
+    private val _classificationStarted = MutableStateFlow(false)
+    val classificationStarted: StateFlow<Boolean> = _classificationStarted.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            sessionRepository.observeProcessedUris().collect { processed ->
+                _uiState.update { it.copy(processedUris = processed) }
+            }
+        }
+    }
 
     /** Called by the screen whenever the permission state is (re)computed. */
     fun onPermissionResult(access: PhotoAccess) {
@@ -99,31 +107,32 @@ class LibraryViewModel @Inject constructor(
         _uiState.update { it.copy(error = null) }
     }
 
-    fun groupSelected() {
+    /**
+     * Start background classification for the current selection. Returns (almost) immediately
+     * after enqueuing — classification runs off the UI thread — and emits the one-shot
+     * navigation signal so the screen can jump to the Queue.
+     */
+    fun classifySelected() {
         val state = _uiState.value
-        if (!state.canGroup) return
+        if (!state.canClassify) return
         // Preserve gallery (newest-first) order in the selection.
         val selected = state.photos.map { it.uri }.filter { it in state.selectedUris }
         viewModelScope.launch {
-            _uiState.update { it.copy(grouping = true, error = null) }
-            sessionStore.setSelectedUris(selected)
-            val result = runCatching { groupingRepository.groupPhotos(selected) }
-            result.onSuccess { groups ->
-                sessionStore.setGroups(groups)
-                _uiState.update { it.copy(grouping = false) }
-                _grouped.value = true
+            _uiState.update { it.copy(starting = true, error = null) }
+            val result = runCatching { sessionRepository.startClassification(selected) }
+            result.onSuccess {
+                _uiState.update { it.copy(starting = false, selectedUris = emptySet()) }
+                _classificationStarted.value = true
             }.onFailure { t ->
-                val message = when (t) {
-                    is AiException -> t.message ?: "AI grouping failed"
-                    else -> t.message ?: "Something went wrong while grouping"
+                _uiState.update {
+                    it.copy(starting = false, error = t.message ?: "Could not start classification")
                 }
-                _uiState.update { it.copy(grouping = false, error = message) }
             }
         }
     }
 
     /** Reset the navigation signal once the screen has consumed it. */
-    fun onGroupedHandled() {
-        _grouped.value = false
+    fun onClassificationStartedHandled() {
+        _classificationStarted.value = false
     }
 }
