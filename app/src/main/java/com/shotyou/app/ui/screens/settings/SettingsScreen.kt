@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import com.shotyou.app.R
 import com.shotyou.app.domain.model.AiSettings
 import com.shotyou.app.domain.model.DefaultModels
@@ -55,6 +56,7 @@ import com.shotyou.app.util.AppLocale
 fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle(initialValue = AiSettings())
     val context = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     // Ask for notification permission the first time the user enables a background feature
     // that needs to post notifications (Android 13+).
@@ -279,6 +281,17 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                         onCheckedChange = { c ->
                             requestNotificationsIfNeeded(c)
                             viewModel.update { it.copy(progressNotifications = c) }
+                        },
+                    )
+                    SwitchRow(
+                        title = stringResource(R.string.settings_root_keepalive),
+                        description = stringResource(R.string.settings_root_keepalive_desc),
+                        checked = settings.rootKeepAlive,
+                        onCheckedChange = { c ->
+                            viewModel.update { it.copy(rootKeepAlive = c) }
+                            if (c) scope.launch {
+                                com.shotyou.app.util.RootKeepAlive.apply(context.packageName)
+                            }
                         },
                     )
                 }

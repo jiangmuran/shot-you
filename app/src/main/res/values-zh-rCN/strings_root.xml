@@ -1,0 +1,4 @@
+<resources>
+    <string name="settings_root_keepalive">Root 保活</string>
+    <string name="settings_root_keepalive_desc">设备已 root 时,把应用加入电池优化(Doze)白名单,降低后台任务被系统杀死的概率。几乎不增加耗电——不持有 wakelock。无 root 时自动忽略。</string>
+</resources>

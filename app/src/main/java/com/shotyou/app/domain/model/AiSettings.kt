@@ -78,6 +78,10 @@ data class AiSettings(
     // Queue control (persisted so a paused queue stays paused across restarts)
     val queuePaused: Boolean = false,
 
+    // Optional root-based keep-alive: whitelist from Doze/battery optimization via `su`
+    // (low battery impact — it does not hold a wakelock). No-op without root.
+    val rootKeepAlive: Boolean = false,
+
     // Prompt behaviour
     val autoOptimizePrompt: Boolean = true,
     val defaultStyle: String = StylePreset.REALISTIC.id,
