@@ -24,6 +24,7 @@ import com.shotyou.app.domain.repository.UsageRepository
 import com.shotyou.app.util.Clock
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
