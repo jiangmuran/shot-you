@@ -67,7 +67,9 @@ class GroupsViewModel @Inject constructor(
                 val o = ov[group.id]
                 CurationItem(
                     group = group,
-                    included = o?.included ?: group.recommended,
+                    // Default to CHECKED so the user can always Start; the VLM's "skip"
+                    // suggestion is shown as a badge (group.recommended) rather than auto-unchecking.
+                    included = o?.included ?: true,
                     hint = o?.hint ?: defaultHint(group),
                 )
             }
@@ -132,19 +134,15 @@ class GroupsViewModel @Inject constructor(
     }
 
     private companion object {
-        /** Prompt-hint prefill: the VLM's reason, falling back to the group title. */
-        fun defaultHint(group: PhotoGroup): String =
-            group.reason.ifBlank { group.title }
+        // The prompt is an INSTRUCTION (what to do) — the reference photos carry the actual
+        // content. Do NOT prefill it with the VLM's description/reason.
+        fun defaultHint(group: PhotoGroup): String = defaultBasePrompt(group)
 
-        /** Fallback base prompt when the hint is cleared: built from the category + title. */
-        fun defaultBasePrompt(group: PhotoGroup): String {
-            val cat = group.category?.takeIf { it.isNotBlank() }
-            return when {
-                !group.title.isBlank() && cat != null -> "${group.title} ($cat)"
-                !group.title.isBlank() -> group.title
-                cat != null -> cat
-                else -> "portrait"
+        fun defaultBasePrompt(group: PhotoGroup): String =
+            if (com.shotyou.app.util.LangUtil.isChinese()) {
+                "把这组照片融合并精修成一张最自然、好看的照片"
+            } else {
+                "Merge and refine this group into one natural, flattering photo"
             }
-        }
     }
 }
