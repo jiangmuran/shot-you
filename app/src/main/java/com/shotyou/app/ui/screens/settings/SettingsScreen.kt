@@ -157,6 +157,26 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 }
             }
 
+            // 2b. Per-category style rules
+            item { SettingsSectionHeader(stringResource(R.string.settings_section_category_styles)) }
+            item {
+                SettingsCard {
+                    com.shotyou.app.domain.model.PhotoCategories.ALL.forEach { cat ->
+                        CategoryStyleRow(
+                            category = cat,
+                            selectedStyle = settings.categoryStyles[cat],
+                            onSelect = { styleId ->
+                                viewModel.update { s ->
+                                    val m = s.categoryStyles.toMutableMap()
+                                    if (styleId == null) m.remove(cat) else m[cat] = styleId
+                                    s.copy(categoryStyles = m)
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+
             // 3. Classification
             item { SettingsSectionHeader(stringResource(R.string.settings_section_classification)) }
             item {
@@ -381,6 +401,32 @@ private fun StyleChips(selectedId: String, onSelect: (String) -> Unit) {
                 onClick = { onSelect(preset.id) },
                 label = { Text(stringResource(preset.labelRes())) },
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CategoryStyleRow(category: String, selectedStyle: String?, onSelect: (String?) -> Unit) {
+    androidx.compose.foundation.layout.Column(Modifier.padding(vertical = 6.dp)) {
+        Text(
+            stringResource(com.shotyou.app.ui.categoryLabelRes(category)),
+            style = MaterialTheme.typography.bodyMedium,
+            fontFamily = FontFamily.Default,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = selectedStyle == null,
+                onClick = { onSelect(null) },
+                label = { Text(stringResource(R.string.settings_category_style_default)) },
+            )
+            StylePreset.entries.forEach { preset ->
+                FilterChip(
+                    selected = selectedStyle == preset.id,
+                    onClick = { onSelect(preset.id) },
+                    label = { Text(stringResource(preset.labelRes())) },
+                )
+            }
         }
     }
 }

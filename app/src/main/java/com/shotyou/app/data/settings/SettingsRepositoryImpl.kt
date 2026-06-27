@@ -12,6 +12,9 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.shotyou.app.domain.model.AiSettings
 import com.shotyou.app.domain.repository.SettingsRepository
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.Json
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -20,6 +23,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "shot_you_settings")
+
+private val mapJson = Json { ignoreUnknownKeys = true }
+private val stringMapSerializer = MapSerializer(String.serializer(), String.serializer())
+private fun encodeCategoryStyles(map: Map<String, String>): String =
+    runCatching { mapJson.encodeToString(stringMapSerializer, map) }.getOrDefault("{}")
+private fun decodeCategoryStyles(raw: String?): Map<String, String> =
+    if (raw.isNullOrBlank()) emptyMap()
+    else runCatching { mapJson.decodeFromString(stringMapSerializer, raw) }.getOrDefault(emptyMap())
 
 @Singleton
 class SettingsRepositoryImpl @Inject constructor(
@@ -46,6 +57,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val AUTO_OPTIMIZE = booleanPreferencesKey("auto_optimize")
         val DEFAULT_STYLE = stringPreferencesKey("default_style")
         val DEFAULT_INTENSITY = intPreferencesKey("default_intensity")
+        val CATEGORY_STYLES = stringPreferencesKey("category_styles")
         val PRICE_PER_IMAGE = doublePreferencesKey("price_per_image")
         val PRICE_PER_1K_INPUT = doublePreferencesKey("price_per_1k_input")
         val PRICE_PER_1K_OUTPUT = doublePreferencesKey("price_per_1k_output")
@@ -79,6 +91,7 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs[Keys.AUTO_OPTIMIZE] = s.autoOptimizePrompt
             prefs[Keys.DEFAULT_STYLE] = s.defaultStyle
             prefs[Keys.DEFAULT_INTENSITY] = s.defaultIntensity
+            prefs[Keys.CATEGORY_STYLES] = encodeCategoryStyles(s.categoryStyles)
             prefs[Keys.PRICE_PER_IMAGE] = s.pricePerImage
             prefs[Keys.PRICE_PER_1K_INPUT] = s.pricePer1kInputTokens
             prefs[Keys.PRICE_PER_1K_OUTPUT] = s.pricePer1kOutputTokens
@@ -109,6 +122,7 @@ class SettingsRepositoryImpl @Inject constructor(
             autoOptimizePrompt = this[Keys.AUTO_OPTIMIZE] ?: d.autoOptimizePrompt,
             defaultStyle = this[Keys.DEFAULT_STYLE] ?: d.defaultStyle,
             defaultIntensity = this[Keys.DEFAULT_INTENSITY] ?: d.defaultIntensity,
+            categoryStyles = decodeCategoryStyles(this[Keys.CATEGORY_STYLES]),
             pricePerImage = this[Keys.PRICE_PER_IMAGE] ?: d.pricePerImage,
             pricePer1kInputTokens = this[Keys.PRICE_PER_1K_INPUT] ?: d.pricePer1kInputTokens,
             pricePer1kOutputTokens = this[Keys.PRICE_PER_1K_OUTPUT] ?: d.pricePer1kOutputTokens,

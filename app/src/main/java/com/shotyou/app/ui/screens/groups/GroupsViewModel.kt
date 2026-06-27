@@ -98,9 +98,10 @@ class GroupsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val settings = settingsRepository.current()
-                val style = StylePreset.fromId(settings.defaultStyle)
                 chosen.forEach { item ->
                     val group = item.group
+                    // Per-category style rule (e.g. people→portrait, scenery→travel), else default.
+                    val style = StylePreset.fromId(settings.styleFor(group.category))
                     val basePrompt = item.hint.ifBlank { defaultBasePrompt(group) }
                     val variants = PromptComposer.variants(
                         basePrompt = basePrompt,

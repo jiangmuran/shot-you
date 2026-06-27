@@ -86,6 +86,9 @@ data class AiSettings(
     val autoOptimizePrompt: Boolean = true,
     val defaultStyle: String = StylePreset.REALISTIC.id,
     val defaultIntensity: Int = 50,
+    /** Per-category style override: VLM category id (people/scenery/...) → StylePreset id.
+     *  Falls back to [defaultStyle] when a category has no rule. */
+    val categoryStyles: Map<String, String> = emptyMap(),
 
     // Pricing — used to compute the usage/cost dashboard. All default to 0.0 (cost shown
     // as 0 until the user fills these in).
@@ -99,4 +102,13 @@ data class AiSettings(
 ) {
     val isConfigured: Boolean
         get() = apiKey.isNotBlank() && apiBaseUrl.isNotBlank()
+
+    /** The StylePreset id to use for a group of the given category. */
+    fun styleFor(category: String?): String =
+        category?.let { categoryStyles[it] } ?: defaultStyle
+}
+
+/** The coarse categories the VLM assigns (must match the grouping prompt). */
+object PhotoCategories {
+    val ALL = listOf("people", "scenery", "food", "animal", "object", "other")
 }
