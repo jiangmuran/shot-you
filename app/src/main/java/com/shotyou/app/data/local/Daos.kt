@@ -55,6 +55,24 @@ interface GenerationJobDao {
 }
 
 @Dao
+interface SessionDao {
+    @Query("SELECT * FROM sessions ORDER BY createdAtMs DESC")
+    fun observeAll(): Flow<List<SessionEntity>>
+
+    @Query("SELECT * FROM sessions WHERE id = :id")
+    fun observeById(id: String): Flow<SessionEntity?>
+
+    @Query("SELECT * FROM sessions WHERE id = :id")
+    suspend fun getById(id: String): SessionEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(entity: SessionEntity)
+
+    @Query("DELETE FROM sessions WHERE id = :id")
+    suspend fun delete(id: String)
+}
+
+@Dao
 interface UsageDao {
     @Query("SELECT * FROM usage_records ORDER BY timestampMs DESC")
     fun observeAll(): Flow<List<UsageRecordEntity>>

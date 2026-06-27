@@ -13,6 +13,7 @@ data class Photo(
 )
 
 /** A cluster of near-duplicate photos proposed by the VLM. */
+@kotlinx.serialization.Serializable
 data class PhotoGroup(
     val id: String,
     val title: String,

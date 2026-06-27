@@ -9,8 +9,9 @@ import androidx.room.TypeConverters
         TemplateEntity::class,
         GenerationJobEntity::class,
         UsageRecordEntity::class,
+        SessionEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -18,6 +19,7 @@ abstract class ShotYouDatabase : RoomDatabase() {
     abstract fun templateDao(): TemplateDao
     abstract fun generationJobDao(): GenerationJobDao
     abstract fun usageDao(): UsageDao
+    abstract fun sessionDao(): SessionDao
 
     companion object {
         const val NAME = "shot_you.db"

@@ -87,6 +87,24 @@ interface GenerationRepository {
     suspend fun resumeQueue()
 }
 
+/** Background classification "sessions": classify selected photos off the UI thread,
+ *  track their stage, and feed the curation screen. */
+interface SessionRepository {
+    fun observeSessions(): Flow<List<com.shotyou.app.domain.model.GenerationSession>>
+    fun observeSession(id: String): Flow<com.shotyou.app.domain.model.GenerationSession?>
+    suspend fun getSession(id: String): com.shotyou.app.domain.model.GenerationSession?
+    /** Create a CLASSIFYING session and enqueue background classification; returns its id. */
+    suspend fun startClassification(uris: List<String>): String
+    /** Called by the classification worker on success. */
+    suspend fun completeClassification(id: String, groups: List<PhotoGroup>)
+    /** Called by the classification worker on failure. */
+    suspend fun failClassification(id: String, error: String?)
+    suspend fun markGenerating(id: String)
+    suspend fun deleteSession(id: String)
+    /** All photo uris that belong to any session (for Library "already processed" marking). */
+    fun observeProcessedUris(): Flow<Set<String>>
+}
+
 /** Usage / call-count dashboard data. */
 interface UsageRepository {
     fun observeRecords(): Flow<List<UsageRecord>>

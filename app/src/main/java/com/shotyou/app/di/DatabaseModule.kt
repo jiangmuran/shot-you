@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.shotyou.app.data.local.GenerationJobDao
+import com.shotyou.app.data.local.SessionDao
 import com.shotyou.app.data.local.ShotYouDatabase
 import com.shotyou.app.data.local.TemplateDao
 import com.shotyou.app.data.local.UsageDao
@@ -27,11 +28,26 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS sessions (" +
+                    "id TEXT NOT NULL PRIMARY KEY, " +
+                    "stage TEXT NOT NULL, " +
+                    "photoUris TEXT NOT NULL, " +
+                    "groupsJson TEXT NOT NULL, " +
+                    "error TEXT, " +
+                    "createdAtMs INTEGER NOT NULL, " +
+                    "updatedAtMs INTEGER NOT NULL)",
+            )
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): ShotYouDatabase =
         Room.databaseBuilder(context, ShotYouDatabase::class.java, ShotYouDatabase.NAME)
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .fallbackToDestructiveMigration() // safety net for any other version jump
             .build()
 
@@ -43,4 +59,7 @@ object DatabaseModule {
 
     @Provides
     fun provideUsageDao(db: ShotYouDatabase): UsageDao = db.usageDao()
+
+    @Provides
+    fun provideSessionDao(db: ShotYouDatabase): SessionDao = db.sessionDao()
 }

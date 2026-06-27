@@ -2,9 +2,14 @@ package com.shotyou.app.data.local
 
 import com.shotyou.app.domain.model.AiOperation
 import com.shotyou.app.domain.model.GenerationJob
+import com.shotyou.app.domain.model.GenerationSession
 import com.shotyou.app.domain.model.JobStatus
+import com.shotyou.app.domain.model.PhotoGroup
+import com.shotyou.app.domain.model.SessionStage
 import com.shotyou.app.domain.model.Template
 import com.shotyou.app.domain.model.UsageRecord
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 
 fun TemplateEntity.toDomain() = Template(
     id = id,
@@ -75,6 +80,30 @@ fun UsageRecordEntity.toDomain() = UsageRecord(
     estimatedCostUsd = estimatedCostUsd,
     success = success,
     timestampMs = timestampMs,
+)
+
+private val sessionJson = Json { ignoreUnknownKeys = true }
+private val groupListSerializer = ListSerializer(PhotoGroup.serializer())
+
+fun SessionEntity.toDomain() = GenerationSession(
+    id = id,
+    stage = runCatching { SessionStage.valueOf(stage) }.getOrDefault(SessionStage.FAILED),
+    photoUris = photoUris,
+    groups = if (groupsJson.isBlank()) emptyList()
+    else runCatching { sessionJson.decodeFromString(groupListSerializer, groupsJson) }.getOrDefault(emptyList()),
+    error = error,
+    createdAtMs = createdAtMs,
+    updatedAtMs = updatedAtMs,
+)
+
+fun GenerationSession.toEntity() = SessionEntity(
+    id = id,
+    stage = stage.name,
+    photoUris = photoUris,
+    groupsJson = sessionJson.encodeToString(groupListSerializer, groups),
+    error = error,
+    createdAtMs = createdAtMs,
+    updatedAtMs = updatedAtMs,
 )
 
 fun UsageRecord.toEntity() = UsageRecordEntity(

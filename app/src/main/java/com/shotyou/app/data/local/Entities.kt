@@ -34,6 +34,17 @@ data class GenerationJobEntity(
     val updatedAtMs: Long,
 )
 
+@Entity(tableName = "sessions")
+data class SessionEntity(
+    @PrimaryKey val id: String,
+    val stage: String,
+    val photoUris: List<String>,
+    val groupsJson: String,
+    val error: String?,
+    val createdAtMs: Long,
+    val updatedAtMs: Long,
+)
+
 @Entity(tableName = "usage_records")
 data class UsageRecordEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
