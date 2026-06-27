@@ -2,6 +2,7 @@ package com.shotyou.app.work
 
 import android.content.Context
 import android.content.pm.ServiceInfo
+import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
@@ -13,6 +14,7 @@ import com.shotyou.app.data.local.toEntity
 import com.shotyou.app.domain.ai.AiException
 import com.shotyou.app.domain.ai.AiImage
 import com.shotyou.app.domain.ai.AiProviderFactory
+import com.shotyou.app.domain.ai.ImageGenOptions
 import com.shotyou.app.domain.model.AiOperation
 import com.shotyou.app.domain.model.JobStatus
 import com.shotyou.app.domain.model.UsageRecord
@@ -79,7 +81,10 @@ class GenerationWorker @AssistedInject constructor(
 
             val refs: List<AiImage> = job.referenceUris.map { photoRepository.loadAiImage(it) }
             val provider = factory.imageGen(settings)
-            val result = provider.generate(refs, job.prompt)
+            // Match the output aspect ratio to the reference so portraits don't come back
+            // square (which crops/distorts and makes the result look unlike the original).
+            val size = refs.firstOrNull()?.let { outputSizeFor(it.bytes) }
+            val result = provider.generate(refs, job.prompt, ImageGenOptions(count = 1, size = size))
             val image = result.images.firstOrNull()
                 ?: throw AiException("Provider returned no image")
             val uri = photoRepository.saveGeneratedImage(image.bytes, image.mimeType, "ShotYou_${job.id}")
@@ -186,6 +191,20 @@ class GenerationWorker @AssistedInject constructor(
             )
         } else {
             ForegroundInfo(GenerationNotifications.NOTIF_ID, notification)
+        }
+    }
+
+    /** Map the reference image's orientation to a supported gpt-image output size. */
+    private fun outputSizeFor(bytes: ByteArray): String {
+        val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+        val w = opts.outWidth
+        val h = opts.outHeight
+        if (w <= 0 || h <= 0) return "1024x1024"
+        return when {
+            h >= w * 1.2 -> "1024x1536" // portrait
+            w >= h * 1.2 -> "1536x1024" // landscape
+            else -> "1024x1024"
         }
     }
 
